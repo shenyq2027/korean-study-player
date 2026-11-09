@@ -1,0 +1,2201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>TTMIK 이야기 · 字幕播放器</title>
+<style>
+  :root{
+    --bg:#0f1116; --panel:#141821; --panel2:#11151d; --line:rgba(255,255,255,.07);
+    --fg:#eef1f6; --dim:rgba(238,241,246,.36); --dim2:rgba(238,241,246,.22);
+    --accent:#7fd1c1; --a:#8fc8ff; --b:#ffc48f; --warn:#ffb4a2;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg);color:var(--fg);
+    font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR","NanumGothic",-apple-system,sans-serif;
+    display:flex;overflow:hidden;font-size:14px;-webkit-font-smoothing:antialiased;
+  }
+  /* ================= 左侧课程列表 ================= */
+  .side{
+    flex:0 0 306px;display:flex;flex-direction:column;background:var(--panel2);
+    border-right:1px solid var(--line);min-height:0;min-width:0;z-index:5;
+  }
+  .side-head{padding:18px 16px 10px;flex:0 0 auto}
+  .logo{display:flex;align-items:baseline;gap:8px;margin-bottom:14px}
+  .logo b{font-size:15px;letter-spacing:-.01em}
+  .logo span{font-size:11px;color:var(--dim);letter-spacing:.04em}
+  .ysbooks{display:none;gap:5px;padding:0 14px 8px}
+  body.ys .ysbooks{display:flex}
+  .twlv{display:none;gap:5px;padding:0 14px 8px}
+  body.tw .twlv{display:flex}
+  .ysbooks .yb{font-size:11.5px;padding:3px 9px;border-radius:7px;cursor:pointer;
+    color:var(--dim);border:1px solid var(--line);background:rgba(255,255,255,.035);transition:.15s}
+  .ysbooks .yb:hover{color:var(--fg)}
+  .ysbooks .yb.on{color:var(--accent);background:rgba(127,209,193,.12);border-color:rgba(127,209,193,.3)}
+  .twlv .yb{flex:1 1 0;text-align:center;font-size:11.5px;padding:3px 9px;border-radius:7px;
+    cursor:pointer;color:var(--dim);border:1px solid var(--line);background:rgba(255,255,255,.035);transition:.15s}
+  .twlv .yb:hover{color:var(--fg)}
+  .twlv .yb.on{color:var(--accent);background:rgba(127,209,193,.12);border-color:rgba(127,209,193,.3);font-weight:600}
+  .ghnote{padding:0 14px 9px;font-size:10.5px;line-height:1.5;color:var(--dim);border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:2px}
+  .ghnote b{color:rgba(238,241,246,.78);font-weight:600}
+  .yshint{display:none;padding:0 14px 9px;font-size:10.5px;line-height:1.5;color:var(--dim)}
+  body.ys .yshint{display:block}
+  .twhint{display:none;padding:0 14px 9px;font-size:10.5px;line-height:1.5;color:var(--dim)}
+  body.tw .twhint{display:block}
+  .tkex{display:none;gap:4px;padding:0 14px 8px;flex-wrap:wrap}
+  body.tk .tkex{display:flex}
+  .tkex .yb{font-size:11px;padding:3px 7px;border-radius:7px;cursor:pointer;color:var(--dim);
+    border:1px solid var(--line);background:rgba(255,255,255,.035);transition:.15s;
+    font-variant-numeric:tabular-nums}
+  .tkex .yb:hover{color:var(--fg)}
+  .tkex .yb.on{color:var(--accent);background:rgba(127,209,193,.12);border-color:rgba(127,209,193,.3);font-weight:600}
+  .tkhint{display:none;padding:0 14px 9px;font-size:10.5px;line-height:1.5;color:var(--dim)}
+  body.tk .tkhint{display:block}
+  .search{position:relative}
+  .search input{
+    width:100%;padding:9px 11px 9px 30px;border-radius:9px;font:inherit;font-size:13px;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--fg);outline:none;
+  }
+  .search input:focus{border-color:rgba(127,209,193,.45);background:rgba(255,255,255,.07)}
+  .search input::placeholder{color:var(--dim2)}
+  .search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;opacity:.32}
+  .tabs{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+  .series{display:flex;gap:4px;margin:0 0 2px;flex-wrap:wrap}
+  .sr{flex:1 1 auto;text-align:center;font-size:11px;padding:5px 2px;border-radius:7px;cursor:pointer;
+    color:var(--dim);border:1px solid var(--line);transition:.15s;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;letter-spacing:-.02em}
+  .sr:hover{color:var(--fg);background:rgba(255,255,255,.05)}
+  .sr.on{color:var(--accent);background:rgba(127,209,193,.14);border-color:rgba(127,209,193,.35);font-weight:600}
+  .tab{font-size:11.5px;padding:4px 9px;border-radius:7px;cursor:pointer;color:var(--dim);
+    border:1px solid transparent;transition:.15s;white-space:nowrap}
+  .tab:hover{color:var(--fg);background:rgba(255,255,255,.05)}
+  .tab.on{color:var(--accent);background:rgba(127,209,193,.12);border-color:rgba(127,209,193,.3)}
+  .rows{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:4px 8px 14px}
+  .rows::-webkit-scrollbar{width:7px}
+  .rows::-webkit-scrollbar-thumb{background:rgba(255,255,255,.10);border-radius:4px}
+  .row{
+    position:relative;display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:8px;
+    cursor:pointer;transition:background .13s;border-left:2px solid transparent;
+  }
+  .row:hover{background:rgba(255,255,255,.05)}
+  .row.on{background:rgba(127,209,193,.13);border-left-color:var(--accent)}
+  .row.na{cursor:default;opacity:.42}
+  .row .n{
+    flex:0 0 26px;font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;text-align:right;
+  }
+  .row.on .n{color:var(--accent)}
+  .row .tt{flex:1 1 auto;min-width:0}
+  .row .ko{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35}
+  .row .zh{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+  .row .dot{flex:0 0 6px;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.16)}
+  .row .dot.ly{background:var(--accent)}
+  .row .dot.na{background:none;border:1px solid rgba(255,255,255,.18)}
+  .row .pg{position:absolute;left:2px;right:8px;bottom:2px;height:2px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden}
+  .row .pg i{display:block;height:100%;background:rgba(127,209,193,.55)}
+  .side-foot{
+    flex:0 0 auto;padding:10px 16px 13px;border-top:1px solid var(--line);
+    font-size:11px;color:var(--dim2);display:flex;gap:10px;flex-wrap:wrap
+  }
+  .side-foot b{color:var(--dim);font-weight:600}
+
+  /* ================= 右侧播放区 ================= */
+  .main{flex:1 1 auto;display:flex;flex-direction:column;min-width:0;
+    background:radial-gradient(1100px 620px at 50% -12%, #1b2231 0%, var(--bg) 58%)}
+  .top{flex:0 0 auto;padding:22px 30px 6px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .titles{min-width:0}
+  .titles .idx{font-size:11px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase}
+  .titles h1{margin:5px 0 0;font-size:27px;font-weight:700;letter-spacing:-.01em;
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .titles h1 em{font-style:normal;font-size:14px;color:var(--dim);font-weight:500}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .bdg{font-size:10.5px;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.10);
+    color:var(--dim);white-space:nowrap}
+  .bdg.ok{color:var(--accent);border-color:rgba(127,209,193,.3);background:rgba(127,209,193,.08)}
+  .bdg.warn{color:var(--warn);border-color:rgba(255,180,162,.3);background:rgba(255,180,162,.08)}
+  .tools{display:flex;gap:6px;flex:0 0 auto}
+  .side-toggle{display:none}
+
+  .stage{position:relative;flex:1 1 auto;overflow:hidden;min-height:0;
+    scrollbar-gutter:stable;
+    mask-image:linear-gradient(180deg,transparent 0,#000 15%,#000 85%,transparent 100%);
+    -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 15%,#000 85%,transparent 100%)}
+  /* 滚动条宽度统一：不然从"锁死"切到"可滚"时右侧突然窄一截，句子会重新换行、看着像跳了一下 */
+  .stage::-webkit-scrollbar{width:9px}
+  .stage::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:5px}
+  .list{position:absolute;left:0;right:0;top:50%;will-change:transform;
+    transition:transform .5s cubic-bezier(.22,.61,.36,1)}
+  .line{padding:6px 34px;min-height:58px;display:flex;align-items:center;gap:13px;
+    font-size:22px;line-height:1.36;color:var(--dim);cursor:pointer;transition:color .35s}
+  .who{flex:0 0 42px;font-size:10px;letter-spacing:.06em;text-align:center;padding:3px 0;
+    border-radius:5px;opacity:.4;border:1px solid currentColor;transition:opacity .35s;cursor:default}
+  /* 名字不参与复制（见 selPlain），所以选中时也不给它上高亮，免得看起来像被复制了 */
+  .who::selection{background:transparent;color:inherit}
+  .who::-moz-selection{background:transparent;color:inherit}
+  .line .who:empty{display:none}
+  .txt{white-space:pre-wrap;word-break:keep-all;transition:font-weight .3s}
+  .line.past{color:rgba(238,241,246,.14)}
+  .line.past .who{opacity:.14}
+  .line.next{color:rgba(238,241,246,.44)}
+  .line.active{color:var(--fg)}
+  .line.active .who{opacity:1}
+  .line.active .txt{
+    --p:0%;font-weight:700;
+    background-image:linear-gradient(90deg,#fff 0 var(--p),rgba(238,241,246,.62) var(--p) 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+  .line:hover{color:var(--fg)}
+  .line.flash{animation:flash .9s ease}
+  @keyframes flash{0%{background:rgba(127,209,193,.15)}100%{background:transparent}}
+
+  /* ================= 词卡（TOPIK 词汇） ================= */
+  body.tw .line{flex-direction:column;align-items:stretch;gap:3px;padding:11px 28px 12px 34px;
+    min-height:0;border-bottom:1px solid rgba(255,255,255,.055);border-radius:0;cursor:pointer}
+  body.tw .line .who{display:none}
+  body.tw .line .txt{display:flex;flex-direction:column;gap:3px;white-space:normal;word-break:keep-all;
+    background:none!important;-webkit-text-fill-color:currentColor!important;color:inherit!important;font-weight:inherit!important}
+  body.tw .line:nth-child(even){background:rgba(255,255,255,.014)}
+  body.tw .line:hover{background:rgba(255,255,255,.05)}
+  body.tw .line.rmark{background:rgba(127,209,193,.12)}
+  body.tw .wc-h{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+  body.tw .wc-w{font-size:19px;font-weight:700;letter-spacing:-.01em;color:var(--fg);line-height:1.3}
+  body.tw .wc-m{font-size:12.5px;color:rgba(238,241,246,.5);font-weight:400}
+  body.tw .wc-e{font-size:14.5px;line-height:1.5;color:rgba(238,241,246,.72)}
+  body.tw .wc-z{font-size:12.5px;line-height:1.45;color:rgba(238,241,246,.36)}
+  body.tw .wc-n{font-size:10px;color:rgba(238,241,246,.2);font-variant-numeric:tabular-nums;
+    position:absolute;left:10px;top:14px}
+  body.tw .line{position:relative}
+  body.tw .list{position:relative;top:0;transform:none!important}
+  body.tw .stage{mask-image:linear-gradient(180deg,transparent 0,#000 6%,#000 94%,transparent 100%);
+    -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 6%,#000 94%,transparent 100%)}
+
+  .empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;gap:10px;color:var(--dim);text-align:center;padding:0 30px}
+  .empty.show{display:flex}
+  .empty .big{font-size:15px;color:rgba(238,241,246,.62)}
+  .empty .sm{font-size:12.5px;line-height:1.7;max-width:420px}
+
+  .bar{flex:0 0 auto;padding:4px 30px 24px;background:linear-gradient(180deg,transparent,rgba(8,10,14,.7) 38%)}
+  .seek{position:relative;height:22px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+  .track{position:relative;width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.13);overflow:hidden}
+  .fill{position:absolute;inset:0 auto 0 0;width:0;background:var(--accent);border-radius:2px}
+  .knob{position:absolute;width:11px;height:11px;border-radius:50%;background:#fff;transform:translateX(-50%);
+    opacity:0;transition:opacity .2s;box-shadow:0 0 0 4px rgba(127,209,193,.22);pointer-events:none}
+  .seek:hover .knob{opacity:1}
+  .row2{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+  .row2 button{font-size:12.5px;padding:6px 10px}
+  .row2 .mini button{padding:6px 8px}
+  .time{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;min-width:74px}
+  .spacer{flex:1}
+  button{font:inherit;color:var(--fg);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);
+    border-radius:9px;padding:7px 12px;font-size:13px;cursor:pointer;transition:.18s}
+  button:hover{background:rgba(255,255,255,.13)}
+  button.on{background:rgba(127,209,193,.18);border-color:rgba(127,209,193,.45);color:var(--accent)}
+  button:disabled{opacity:.35;cursor:default}
+  .play{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#111;border:0;padding:0}
+  .play svg{width:18px;height:18px}
+  .play:hover{background:#e6f6f3}
+  .mini{display:flex;gap:6px}
+  .vsep{width:1px;height:20px;background:rgba(255,255,255,.10)}
+  .hint{font-size:11px;color:rgba(238,241,246,.24);margin-top:7px}
+  .hint kbd{font-family:inherit;font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.1);margin:0 3px 0 6px;color:rgba(238,241,246,.5)}
+  .toast{position:fixed;left:50%;bottom:110px;transform:translate(-50%,10px);
+    background:rgba(127,209,193,.14);border:1px solid rgba(127,209,193,.4);color:var(--accent);
+    padding:9px 16px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;
+    backdrop-filter:blur(8px);z-index:50}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* ================= 右侧单词本 ================= */
+  .nb{
+    flex:0 0 0;width:0;min-width:0;overflow:hidden;display:flex;background:var(--panel2);
+    border-left:1px solid transparent;
+    transition:flex-basis .28s cubic-bezier(.22,.61,.36,1),width .28s cubic-bezier(.22,.61,.36,1),border-color .28s;
+  }
+  body.nb-on .nb{flex-basis:312px;width:312px;border-left-color:var(--line)}
+  .nb-inner{flex:0 0 312px;width:312px;display:flex;flex-direction:column;min-height:0}
+  .nb-head{display:flex;align-items:center;gap:8px;padding:16px 14px 8px}
+  .nb-head b{font-size:14px;letter-spacing:-.01em}
+  .nb-head .c{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .nb-head .x{margin-left:auto;background:none;border:0;color:var(--dim);font-size:17px;line-height:1;padding:2px 6px}
+  .nb-head .x:hover{color:var(--fg);background:none}
+  .nb-tabs{display:flex;gap:5px;padding:0 14px 8px}
+  .nb-tabs .nt{font-size:11.5px;padding:4px 9px;border-radius:7px;cursor:pointer;color:var(--dim);
+    border:1px solid transparent;transition:.15s;white-space:nowrap}
+  .nb-tabs .nt:hover{color:var(--fg);background:rgba(255,255,255,.05)}
+  .nb-tabs .nt.on{color:var(--accent);background:rgba(127,209,193,.12);border-color:rgba(127,209,193,.3)}
+  .nb-tabs .srt{margin-left:auto;font-size:11px;padding:3px 7px;border-radius:7px;cursor:pointer;
+    color:var(--dim);border:1px solid var(--line);background:rgba(255,255,255,.035);
+    white-space:nowrap;transition:.15s;user-select:none}
+  .nb-tabs .srt:hover{color:var(--fg);background:rgba(255,255,255,.05)}
+  .nb-tabs .srt:active{transform:scale(.96)}
+  .nb-q{padding:0 14px 9px}
+  .nb-q input{width:100%;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.05);
+    border:1px solid var(--line);color:var(--fg);font:inherit;font-size:12.5px;outline:none}
+  .nb-q input:focus{border-color:rgba(127,209,193,.45)}
+  .nb-q input::placeholder{color:var(--dim2)}
+  .nb-list{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:2px 14px 12px}
+  .nb-list::-webkit-scrollbar{width:7px}
+  .nb-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.10);border-radius:4px}
+  .wd{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:9px;padding:9px 10px 8px;margin-bottom:7px}
+  .wd .hd{display:flex;align-items:flex-start;gap:6px}
+  .wd .w{flex:1 1 auto;min-width:0;font-size:15px;font-weight:700;line-height:1.32;word-break:break-all;letter-spacing:-.01em}
+  .wd .x{flex:0 0 auto;background:none;border:0;color:var(--dim2);font-size:15px;line-height:1;padding:0 2px}
+  .wd .x:hover{color:var(--warn);background:none}
+  .wd input.m{display:block;width:100%;margin-top:5px;background:none;border:0;
+    border-bottom:1px dashed rgba(255,255,255,.12);color:rgba(238,241,246,.82);
+    font:inherit;font-size:12.5px;padding:3px 0;outline:none;border-radius:0}
+  .wd input.m:focus{border-bottom-color:rgba(127,209,193,.55);color:var(--fg)}
+  .wd input.m::placeholder{color:rgba(238,241,246,.2)}
+  .wd .meta{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:10.5px;color:var(--dim2)}
+  .wd input.m.auto{color:rgba(238,241,246,.52);font-style:normal}
+  .wd input.m.auto::after{content:''}
+  .wd .g{margin-top:4px;font-size:10.5px;line-height:1.55;color:rgba(127,209,193,.62);
+    padding-left:1px;word-break:break-all}
+  .wd .g b{font-weight:600;color:rgba(127,209,193,.8)}
+  .nb-foot2 button:disabled{opacity:.55;cursor:default}
+  .wd.hit{animation:wdhit 1.4s ease}
+  @keyframes wdhit{0%{background:rgba(127,209,193,.22);border-color:rgba(127,209,193,.55)}
+    100%{background:rgba(255,255,255,.035);border-color:var(--line)}}
+  .wd .meta a{color:rgba(127,209,193,.7);cursor:pointer;text-decoration:none;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wd .meta a:hover{color:var(--accent)}
+  .nb-empty{padding:24px 10px;font-size:12px;line-height:1.85;color:var(--dim2);text-align:center}
+  .nb-tip{flex:0 0 auto;padding:0 14px 8px;font-size:10.5px;line-height:1.5;color:var(--dim2)}
+  .nb-warn{flex:0 0 auto;margin:0 14px 8px;padding:8px 10px;border-radius:8px;font-size:11px;
+    line-height:1.6;color:#ffd7a1;background:rgba(255,177,92,.09);border:1px solid rgba(255,177,92,.28)}
+  .nb-warn b{color:#ffcf8b}
+  .nb-foot{flex:0 0 auto;display:flex;gap:6px;padding:8px 14px 6px;border-top:1px solid var(--line)}
+  .nb-foot button{flex:1 1 0;font-size:11.5px;padding:7px 2px}
+  .nb-foot2{flex:0 0 auto;display:flex;gap:6px;padding:0 14px 12px}
+  .nb-foot2 button{flex:1 1 0;font-size:11px;padding:5px 2px;opacity:.66}
+  .nb-foot2 button:hover{opacity:1}
+  #nbBtn{display:inline-flex;align-items:center;gap:6px}
+  #nbBtn b{font-size:10.5px;color:var(--accent);font-variant-numeric:tabular-nums;font-weight:600}
+  .selpill{position:fixed;z-index:60;display:none;
+    background:rgba(18,23,32,.97);border:1px solid rgba(127,209,193,.45);border-radius:9px;padding:3px;
+    box-shadow:0 10px 26px rgba(0,0,0,.5)}
+  .selpill.show{display:flex;align-items:center}
+  .selpill button{background:none;border:0;color:var(--accent);font-size:12px;padding:5px 9px;border-radius:6px;white-space:nowrap}
+  .selpill button:hover{background:rgba(127,209,193,.15)}
+  .selpill .sp{width:1px;height:15px;background:rgba(255,255,255,.13);margin:0 1px}
+
+  /* ---------- 自由浏览（音频课往下翻看后文） ---------- */
+  .freebar{display:none;flex:0 0 auto;align-items:center;gap:10px;padding:0 30px 10px;
+    font-size:12px;color:var(--dim)}
+  body.free .freebar{display:flex}
+  .donebar{display:none;flex:0 0 auto;align-items:center;gap:10px;padding:0 30px 10px;
+    font-size:12.5px;color:var(--dim)}
+  body.done .donebar{display:flex}
+  .donebar span::before{content:'✓';color:var(--accent);margin-right:6px}
+  .donebar button{font-size:12.5px;padding:6px 12px}
+  body.free .stage{overflow-y:auto;overflow-x:hidden;mask-image:none;-webkit-mask-image:none}
+  body.free .line{cursor:text}
+  body.free .list{position:static;transform:none!important;transition:none}
+  /* free 下不再用"文字透明 + 背景裁切"做进度条：透明字会让选区框画错位 */
+  body.free .line.active .txt{
+    background-image:none;background:none;-webkit-text-fill-color:var(--fg);color:var(--fg)}
+  /* 一旦开始拖选，所有行都还原成实体文字，选区框才跟得上字 */
+  body.pick .line .txt{
+    background-image:none!important;background:none!important;
+    -webkit-text-fill-color:currentColor!important}
+  ::selection{background:rgba(127,209,193,.32);color:#fff}
+
+  /* ---------- 阅读模式（韩语书） ---------- */
+  .reader-bar{display:none;flex:0 0 auto;align-items:center;gap:8px;padding:2px 30px 22px;
+    background:linear-gradient(180deg,transparent,rgba(8,10,14,.7) 38%)}
+  .reader-bar .bk-prog{font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums;min-width:38px;text-align:right}
+  .reader-bar button{font-size:12.5px;padding:6px 11px}
+  .js-fs{font-variant-numeric:tabular-nums;min-width:52px;text-align:center;font-size:12px;color:var(--dim)}
+  body.book .bar{display:none}
+  body.book .reader-bar{display:flex}
+  body.book .stage{overflow-y:auto;overflow-x:hidden;
+    -webkit-mask-image:none;mask-image:none}
+  body.book .list{position:static;transform:none!important;transition:none;
+    max-width:720px;margin:0 auto;padding:6px 0 70px}
+  body.book .line{display:block;padding:2px 34px;min-height:0;font-size:var(--bfs,17px);
+    line-height:1.78;color:rgba(238,241,246,.88);cursor:text;transition:color .2s}
+  body.book .line .who{display:none!important}
+  body.book .line.past,body.book .line.next{color:rgba(238,241,246,.88)}
+  body.book .line:hover{color:#fff}
+  body.book .line.active .txt,
+  body.book .line.active{font-weight:400;color:#fff;background:none;
+    -webkit-text-fill-color:currentColor;background-image:none}
+  body.book .line.flash{animation:none;background:rgba(127,209,193,.13);border-radius:6px}
+  body.book .line.rmark{background:rgba(127,209,193,.11);border-radius:6px;
+    box-shadow:inset 3px 0 0 rgba(127,209,193,.8)}
+  .reader-bar button.on{background:rgba(127,209,193,.16);
+    box-shadow:inset 0 0 0 1px rgba(127,209,193,.45)}
+  .bk-quote{margin:4px 34px 26px;padding:14px 0 14px 16px;border-left:2px solid rgba(127,209,193,.45);
+    font-size:calc(var(--bfs,17px) - 1px);line-height:1.9;color:rgba(238,241,246,.6);font-style:italic}
+  body.book #stage::-webkit-scrollbar{width:9px}
+  body.book #stage::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:5px}
+
+  /* --- 词卡覆盖（要压在 body.book 的 .line 之上） --- */
+  body.tw #rows .row .n{display:none}
+  body.tw #rows .row .ko{font-weight:600;font-size:13px}
+  body.tw #rows .row{padding-left:10px}
+  body.tw .wc-m{color:rgba(238,241,246,.66)}
+  body.tw.book .list{max-width:760px;padding:2px 0 90px}
+  body.tw.book .line{display:flex;flex-direction:column;align-items:stretch;gap:3px;
+    padding:11px 28px 12px 34px;min-height:0;font-size:inherit;line-height:inherit;
+    color:rgba(238,241,246,.9);cursor:pointer;border-bottom:1px solid rgba(255,255,255,.055);
+    border-radius:0}
+  body.tw.book .line:hover{background:rgba(255,255,255,.045);color:rgba(238,241,246,.9)}
+  body.tw.book .line.past,body.tw.book .line.next{color:rgba(238,241,246,.9)}
+  body.tw.book .line.active{color:inherit;font-weight:400;background:rgba(127,209,193,.10)}
+  body.tw.book .line .txt{display:flex;flex-direction:column;gap:3px;white-space:normal;
+    word-break:keep-all;background:none!important;background-image:none!important;
+    -webkit-text-fill-color:currentColor!important;font-weight:inherit!important}
+  body.tw.book .line.rmark{background:rgba(127,209,193,.13);border-radius:0;
+    box-shadow:inset 3px 0 0 rgba(127,209,193,.85)}
+
+  /* ================= 阅读题（TOPIK 真题） ================= */
+  body.tk .list{max-width:780px;padding:2px 0 96px}
+  body.tk .line{display:block;padding:3px 34px;min-height:0;font-size:var(--bfs,17px);
+    line-height:1.82;color:rgba(238,241,246,.9);cursor:text;border-radius:0;transition:none}
+  body.tk .line .who{display:none!important}
+  body.tk .line.past,body.tk .line.next{color:rgba(238,241,246,.9)}
+  body.tk .line:hover{color:#fff;background:none}
+  body.tk .line.active,
+  body.tk .line.active .txt{font-weight:400;color:#fff;background:none;background-image:none;
+    -webkit-text-fill-color:currentColor}
+  body.tk .line.rmark{background:rgba(127,209,193,.12);border-radius:6px}
+  body.tk .tk-p{color:rgba(238,241,246,.92);margin-top:2px}
+  body.tk .tk-q{color:rgba(238,241,246,.95);margin-top:10px}
+  body.tk .tk-o{padding-left:56px;text-indent:-22px;color:rgba(238,241,246,.74);margin-top:6px}
+  body.tk .tk-ocr{font-size:12.5px;line-height:1.7;color:rgba(238,241,246,.34);
+    margin-top:12px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.1)}
+  body.tk .tk-lbl{margin:0 34px 10px;padding:7px 11px;border-radius:8px;font-size:12px;
+    line-height:1.6;color:rgba(127,209,193,.75);background:rgba(127,209,193,.07);
+    border:1px solid rgba(127,209,193,.16)}
+  body.tk .tkimg{margin:8px 34px 12px}
+  body.tk .tkimg img{display:block;width:100%;height:auto;border-radius:7px;
+    box-shadow:0 6px 22px rgba(0,0,0,.35);background:#fff}
+  body.tk .tkimg .cap{font-size:10.5px;color:rgba(238,241,246,.28);margin-top:6px}
+
+  @media (max-width:900px){
+    .nb{position:fixed;inset:0 0 0 auto;z-index:6;box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+    body.nb-on .nb{flex-basis:300px;width:300px}
+    .nb-inner{flex-basis:300px;width:300px}
+    .side{position:fixed;inset:0 auto 0 0;width:296px;transform:translateX(-100%);
+      transition:transform .25s;box-shadow:20px 0 50px rgba(0,0,0,.5)}
+    body.open .side{transform:none}
+    .side-toggle{display:inline-block}
+    .top{padding:16px 18px 4px}
+    .titles h1{font-size:21px}
+    .line{font-size:18px;padding:5px 18px;min-height:52px}
+    .who{flex-basis:34px}
+    .bar{padding:2px 18px 16px}
+    .hint{display:none}
+  }
+</style>
+</head>
+<body>
+<aside class="side" id="side">
+  <div class="side-head">
+    <div class="logo"><b id="sTitle">TTMIK 이야기</b><span id="cnt"></span></div>
+    <div class="ghnote">线上分享版：<b>不含 mp3</b>（原始音频 2.3 GB 未上传）。想听就点右下角「▶ 朗读」，用系统语音逐句读。</div>
+    <div class="series" id="series">
+      <div class="sr on" data-s="ttmik">TTMIK</div>
+      <div class="sr" data-s="topik1">TOPIK Ⅰ</div>
+      <div class="sr" data-s="topik2">TOPIK Ⅱ</div>
+      <div class="sr" data-s="ys">延世</div>
+      <div class="sr" data-s="tw">词汇</div>
+      <div class="sr" data-s="tk">阅读</div>
+      <div class="sr" data-s="book">韩语书</div>
+    </div>
+    <div class="ysbooks" id="ysBooks">
+      <span class="yb on" data-b="2">第2册</span>
+      <span class="yb" data-b="3">第3册</span>
+      <span class="yb" data-b="4">第4册</span>
+      <span class="yb" data-b="5">第5册</span>
+    </div>
+    <div class="yshint" id="ysHint">教材没配录音，课文从扫描页识别而来（个别字词可能有误）。<br>点下面任一课 → 右下角「▶ 朗读」逐句连读。</div>
+    <div class="twlv" id="twLv">
+      <span class="yb on" data-l="1">初级</span>
+      <span class="yb" data-l="2">中级</span>
+      <span class="yb" data-l="3">高级</span>
+    </div>
+    <div class="twhint" id="twHint">一个词一条：单词 → 释义 → 例句 → 译文。点任意一条朗读，拖选可直接存进单词本或复制。<br>
+      内容从书的扫描页识别而来，个别字词（尤其生僻词）会有误认。</div>
+    <div class="tkex" id="tkEx"></div>
+    <div class="tkhint" id="tkHint">9 届真题的阅读 1–50 题，一届一列。<br>
+      点句朗读，拖选可复制、记单词；图表题直接显示原卷截图。</div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" placeholder="搜索课号或标题…" autocomplete="off">
+    </div>
+    <div class="tabs" id="tabs">
+      <div class="tab on" data-f="all">全部</div>
+      <div class="tab" data-f="ly">有字幕</div>
+      <div class="tab" data-f="au">已下载</div>
+      <div class="tab" data-f="wb">有单词</div>
+      <div class="tab" data-f="p0">未听</div>
+    </div>
+  </div>
+  <div class="rows" id="rows"></div>
+  <div class="side-foot" id="foot"></div>
+</aside>
+
+<main class="main">
+  <div class="top">
+    <div class="titles">
+      <div class="idx" id="idx">—</div>
+      <h1 id="ttl">载入中…</h1>
+      <div class="badges" id="badges"></div>
+    </div>
+    <div class="tools"><button id="nbBtn">单词本 <b id="nbBadge">0</b></button><button class="side-toggle" id="sideToggle">目录</button></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="list" id="list"></div>
+    <div class="empty" id="empty">
+      <div class="big">本课还没有字幕</div>
+      <div class="sm">音频可以正常播放。字幕需要先把这一课的录音转写成时间轴——在合集里跟我说一声，我批量补上。</div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="seek" id="seek">
+      <div class="track"><div class="fill" id="fill"></div></div>
+      <div class="knob" id="knob"></div>
+    </div>
+    <div class="row2">
+      <button class="play" id="play" aria-label="播放/暂停">
+        <svg viewBox="0 0 24 24" id="icon"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+      </button>
+      <div class="time"><span id="tcur">0:00</span> / <span id="tdur">--:--</span></div>
+      <div class="vsep"></div>
+      <div class="mini"><button id="prev" title="上一句 (↑)">↑</button><button id="next" title="下一句 (↓)">↓</button></div>
+      <button id="loop" title="循环当前句 (R)">循环本句</button>
+      <button id="speed" title="播放速度">1×</button>
+      <div class="spacer"></div>
+      <button id="prevL" title="上一课">上一课</button>
+      <button id="nextL" title="下一课">下一课</button>
+      <div class="mini"><button id="minus" title="字幕提前 0.2 秒">−0.2s</button><button id="plus" title="字幕延后 0.2 秒">+0.2s</button></div>
+    </div>
+    <div class="hint"><kbd>空格</kbd>播放/暂停<kbd>←</kbd><kbd>→</kbd>±5 秒<kbd>↑</kbd><kbd>↓</kbd>上下句<kbd>R</kbd>循环<kbd>[</kbd><kbd>]</kbd>上下课<kbd>/</kbd>搜索<kbd>W</kbd>记单词</div>
+  </div>
+
+  <div class="donebar" id="doneBar">
+    <span>这一课听完了</span>
+    <button id="doneReplay">▶ 从头再听</button>
+    <button id="doneNext">下一课 ›</button>
+  </div>
+
+  <div class="freebar" id="freeBar">
+    <span>自由浏览中 · 滚轮翻看整课 · 选中文字可记单词 / 复制</span>
+    <button id="freeBack" title="回到正在播放的那一句">回到当前句</button>
+  </div>
+
+  <div class="reader-bar" id="readerBar">
+    <button id="bkFsDown" title="字号变小">A−</button>
+    <button id="bkFsUp" title="字号变大">A＋</button>
+    <button id="bkPlay" title="朗读本篇（再点一次停止）">▶ 朗读</button>
+    <button id="bkRate" title="切换朗读语速">1×</button>
+    <div class="spacer"></div>
+    <span class="bk-prog" id="bkProg">0%</span>
+    <button id="bkPrev" title="上一篇 ([)">上一篇</button>
+    <button id="bkNext" title="下一篇 (])">下一篇</button>
+  </div>
+</main>
+
+<aside class="nb" id="nb">
+  <div class="nb-inner">
+    <div class="nb-head">
+      <b>单词本</b><span class="c" id="nbCount"></span>
+      <button class="x" id="nbClose" title="收起">×</button>
+    </div>
+    <div class="nb-tabs" id="nbTabs">
+      <div class="nt on" data-s="cur">本课</div>
+      <div class="nt" data-s="all">全部</div>
+      <div class="srt" id="nbSort" title="切换排序：按课文顺序 / 最新记的 / 最早记的">按课文</div>
+    </div>
+    <div class="nb-q"><input id="nbQ" placeholder="搜索单词或释义…" autocomplete="off"></div>
+    <div class="nb-list" id="nbList"></div>
+    <div class="nb-tip" id="nbTip">存在浏览器里，换窗口 / 清缓存会丢 → 记完点一次「备份文件」</div>
+    <div class="nb-warn" id="nbWarn" hidden>这是预览窗口，每次端口不同，记的词关掉就没了。<br>想长期保存：双击 <b>index.html</b> 用浏览器打开。</div>
+    <div class="nb-foot">
+      <button id="nbMd" title="导出 Markdown（跟随上方的「本课/全部」）">导出 MD</button>
+      <button id="nbCsv" title="导出 CSV，可直接丢进 Excel / Anki">导出 CSV</button>
+      <button id="nbCopy" title="复制为 Markdown 文本">复制</button>
+    </div>
+    <div class="nb-foot2">
+      <button id="nbAuto" title="用本地词表 + 在线翻译，把空着的释义自动填上">自动释义</button>
+      <button id="nbBak" title="把单词本存成 JSON 文件（换浏览器、清缓存前先点一下）">备份文件</button>
+      <button id="nbRes" title="从备份文件读回来（会按 id 合并，不会覆盖现有）">读回备份</button>
+      <input type="file" id="nbFile" accept=".json,application/json" hidden>
+    </div>
+  </div>
+</aside>
+
+<div class="selpill" id="selpill"><button id="selAdd">＋ 记单词</button><span class="sp"></span><button id="selCopy">复制</button></div>
+
+<div class="toast" id="toast"></div>
+<audio id="audio" preload="metadata"></audio>
+
+<script src="_player/wbdict.js"></script>
+<script src="_player/lessons.js"></script>
+<script src="_books/book.js"></script>
+<script src="_ys/ys.js"></script>
+<script src="_tw/tw.js"></script>
+<script src="_tk/tk.js"></script>
+<script>
+/* 线上版：mp3 没上传，把音频字段摘掉，避免每课都去请求一个 404 的 mp3 */
+(function () {
+  [window.CATALOG, window.BOOKCAT, window.YSCAT, window.TWCAT, window.TKCAT].forEach(a =>
+    (a || []).forEach(c => { if (c.f) { c.f = ''; } }));
+})();
+</script>
+<script>
+const CAT = (window.CATALOG || []).concat(window.BOOKCAT || []).concat(window.YSCAT || []).concat(window.TWCAT || []).concat(window.TKCAT || []);
+const LYR = Object.assign({}, window.LYRICS || {}, window.BOOKLYR || {}, window.YSLYR || {}, window.TWLYR || {}, window.TKLYR || {});
+const byN = Object.fromEntries(CAT.map(c => [c.n, c]));
+
+const SERIES = {
+  ttmik:  { title: 'TTMIK 이야기', tag: n => `Lesson ${n}`, unit: '课' },
+  topik1: { title: 'TOPIK I 初级', tag: () => 'TOPIK I', unit: '卷' },
+  topik2: { title: 'TOPIK II 中高级', tag: () => 'TOPIK II', unit: '卷' },
+  ys:     { title: '延世韩国语', tag: n => { const p = String(n).split('-'); return '第' + p[0].slice(1) + '册 ' + (+p[1]) + '课'; }, unit: '课' },
+  tw:     { title: 'TOPIK 必备单词', tag: n => { const b = byN[n]; return b ? b.k : String(n); }, unit: '单元' },
+  tk:     { title: 'TOPIK 阅读真题', tag: n => { const b = byN[n]; return b ? '第' + b.e + '届 읽기 · ' + b.q + '번' : String(n); }, unit: '题' },
+  book:   { title: '韩语书', tag: n => (String(n).endsWith('-00') ? '序' : '第 ' + (+String(n).split('-')[1]) + ' 篇'), unit: '篇' }
+};
+const SR = c => c.s || 'ttmik';
+let series = SERIES[localStorage.ttmikSeries] ? localStorage.ttmikSeries : 'ttmik';
+const LVN = { 1: '初级', 2: '中级', 3: '高级' };
+let twLv = +localStorage.ttmikTwLv || 1;
+let tkEx = +localStorage.ttmikTkEx || 0;
+
+const $ = id => document.getElementById(id);
+const audio = $('audio'), listEl = $('list'), stageEl = $('stage'), emptyEl = $('empty');
+
+let cur = null, activeIdx = -1, loopOne = false, offset = 0, tickOn = false;
+let autoNext = localStorage.ttmikAutoNext === '1';   // 默认关：听完停在原地，想连播自己开
+const speeds = [1, 0.75, 1.25, 0.5]; let speedIdx = 0;
+let filter = 'all', query = '';
+
+/* ---------- 本地记录 ---------- */
+const LS = {
+  get pos() { try { return JSON.parse(localStorage.ttmikPos || '{}') } catch (e) { return {} } },
+  set pos(v) { localStorage.ttmikPos = JSON.stringify(v) },
+  get last() {
+    try { const m = JSON.parse(localStorage.ttmikLastMap || '{}'); if (m[series]) return m[series] } catch (e) { }
+    return localStorage.ttmikLast || '';
+  },
+  set last(v) {
+    try { const m = JSON.parse(localStorage.ttmikLastMap || '{}'); m[series] = v; localStorage.ttmikLastMap = JSON.stringify(m) } catch (e) { }
+    localStorage.ttmikLast = v;
+  }
+};
+
+const fmt = s => !isFinite(s) ? '--:--'
+  : Math.floor(Math.max(0, s | 0) / 60) + ':' + String(Math.max(0, s | 0) % 60).padStart(2, '0');
+
+/* ---------- 列表 ---------- */
+const isBook = c => !!c && (SR(c) === 'book' || SR(c) === 'ys' || SR(c) === 'tw' || SR(c) === 'tk');
+const isBookSeries = s => s === 'book' || s === 'ys' || s === 'tw' || s === 'tk';
+function statusOf(c) {
+  if (isBook(c)) return { hasLy: true, hasAu: true };
+  const hasLy = !!(LYR[c.n] && LYR[c.n].lines && LYR[c.n].lines.length);
+  const hasAu = !!c.f;
+  return { hasLy, hasAu };
+}
+function renderList() {
+  const q = query.trim().toLowerCase();
+  const wbSet = new Set(wbAll().flatMap(w => w.locs.map(l => l.n)));
+  const rows = CAT.filter(c => {
+    if (SR(c) !== series) return false;
+    if (series === 'ys' && !String(c.n).startsWith('y' + ysBook)) return false;
+    if (series === 'tw' && !q && (+c.lv || 0) !== (+twLv || 1)) return false;
+    if (series === 'tk' && !q && tkEx && (+c.e || 0) !== tkEx) return false;
+    const { hasLy, hasAu } = statusOf(c);
+    if (filter === 'ly' && !hasLy) return false;
+    if (filter === 'au' && !hasAu) return false;
+    if (filter === 'wb' && !wbSet.has(c.n)) return false;
+    if (filter === 'p0' && LS.pos[c.n]) return false;
+    if (!q) return true;
+    if (series === 'tw') {
+      // 词卡系列：搜单词/释义/译文，命中就列出所在单元
+      const L = LYR[c.n];
+      return ('unit ' + c.u + ' ' + c.zh).toLowerCase().includes(q)
+        || (L && L.lines && L.lines.some(l => ((l.t || '') + ' ' + (l.m || '') + ' ' + (l.z || '')).toLowerCase().includes(q)));
+    }
+    if (series === 'tk') {
+      // 阅读题：搜正文、选项、题型说明；跨届命中就直接列出来
+      const L = LYR[c.n];
+      return ('第' + c.e + '届 ' + c.e + ' ' + c.q + ' ' + (c.ko || '') + ' ' + (c.zh || '')).toLowerCase().includes(q)
+        || (L && L.lines && L.lines.some(l => (l.t || '').toLowerCase().includes(q)));
+    }
+    return String(c.n).includes(q) || (c.ko || '').toLowerCase().includes(q) || (c.zh || '').includes(q);
+  });
+  const pos = LS.pos;
+  rowsEl.innerHTML = rows.map(c => {
+    const { hasLy, hasAu } = statusOf(c);
+    const p = pos[c.n] && c.dur ? Math.min(1, pos[c.n] / c.dur) : 0;
+    if (series === 'tk') {
+      const pre = q ? '第' + c.e + '届 · ' : '';
+      return `<div class="row${cur && cur.n === c.n ? ' on' : ''}" data-n="${c.n}">
+      <div class="n">${esc(c.k)}</div>
+      <div class="tt"><div class="ko">${esc(c.ko || '')}</div>
+        <div class="zh">${esc(pre)}${esc(shortNote(c.zh))}</div></div>
+      <div class="dot ${c.img ? 'ly' : ''}"></div>
+    </div>`;
+    }
+    return `<div class="row${hasAu ? '' : ' na'}${cur && cur.n === c.n ? ' on' : ''}" data-n="${c.n}">
+      <div class="n">${esc(series === 'tw' ? String(c.u).padStart(2, '0') : (c.k || c.n))}</div>
+      <div class="tt"><div class="ko">${esc(series === 'tw' ? 'UNIT ' + c.u : (c.ko || ''))}</div>
+        <div class="zh">${esc(series === 'tw' && (+c.lv || 0) !== (+twLv || 1) ? (LVN[c.lv] + ' · ') : '')}${esc(c.zh || '')}</div></div>
+      <div class="dot ${hasLy ? 'ly' : (hasAu ? '' : 'na')}"></div>
+      ${p > 0.01 ? `<div class="pg"><i style="width:${(p * 100).toFixed(1)}%"></i></div>` : ''}
+    </div>`;
+  }).join('') || '<div style="padding:20px 12px;color:rgba(238,241,246,.3);font-size:12.5px">没有匹配的课程</div>';
+  const el = rowsEl.querySelector('.row.on');
+  if (el) el.scrollIntoView({ block: 'nearest' });
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) }
+function shortNote(s) { return String(s || '').replace(/\s*\(\s*각\s*2\s*점\s*\)\s*$/, '').trim() }
+const rowsEl = $('rows');
+
+function stats() {
+  const pool = CAT.filter(c => SR(c) === series
+    && !(series === 'ys' && !String(c.n).startsWith('y' + ysBook))
+    && !(series === 'tw' && (+c.lv || 0) !== (+twLv || 1))
+    && !(series === 'tk' && tkEx && (+c.e || 0) !== tkEx));
+  const au = pool.filter(c => c.f).length;
+  const ly = pool.filter(c => LYR[c.n] && LYR[c.n].lines).length;
+  const heard = pool.filter(c => (LS.pos[c.n] || 0) > 5).length;
+  $('cnt').textContent = `${pool.length} ${SERIES[series].unit}`;
+  if (series === 'tk') {
+    let w = 0, im = 0;
+    pool.forEach(c => {
+      if (c.img) im++;
+      const L = LYR[c.n]; if (L && L.lines) L.lines.forEach(l => { w += (l.t || '').length; });
+    });
+    $('foot').innerHTML = `<span>题 <b>${pool.length}</b></span><span>原卷图 <b>${im}</b></span>`
+      + `<span>字 <b>${(w / 1000).toFixed(1)}k</b></span><span>单词本 <b>${wbAll().length}</b></span>`;
+    return;
+  }
+  if (series === 'tw') {
+    let n = 0;
+    pool.forEach(c => { const L = LYR[c.n]; if (L && L.lines) n += L.lines.length; });
+    $('foot').innerHTML = `<span>单元 <b>${pool.length}</b></span><span>词 <b>${n}</b></span><span>单词本 <b>${wbAll().length}</b></span>`;
+    return;
+  }
+  if (isBookSeries(series)) {
+    let w = 0;
+    pool.forEach(c => { const L = LYR[c.n]; if (L && L.lines) L.lines.forEach(l => { w += l.t.length; }); });
+    $('foot').innerHTML = `<span>篇 <b>${pool.length}</b></span><span>字 <b>${(w / 1000).toFixed(1)}k</b></span><span>单词 <b>${wbAll().length}</b></span>`;
+    return;
+  }
+  $('foot').innerHTML = `<span>已下载 <b>${au}</b></span><span>有字幕 <b>${ly}</b></span><span>听过 <b>${heard}</b></span><span>单词 <b>${wbAll().length}</b></span>`;
+}
+
+/* ---------- 载入一课 ---------- */
+// 「上次听到哪儿」只有在没听完时才算数：听到结尾的课下次点开要从头，
+// 否则重播会落到末尾、立刻又结束、又跳下一课
+function resumeAt(n) {
+  const c = byN[n];
+  const dur = (c && c.dur) || (LYR[n] && LYR[n].dur) || 0;
+  const p = LS.pos[n] || 0;
+  if (!p) return 0;
+  if (dur > 5 && p >= dur - 2) return 0;
+  return p;
+}
+function load(n, at = 0, play = false) {
+  const c = byN[n];
+  if (!c) return;
+  cur = c;
+  if (SR(c) !== series) { series = SR(c); syncSeries(); renderList(); }
+  // 搜索命中别的级别：跟着切过去，不然列表和内容对不上
+  if (SR(c) === 'tw' && (+c.lv || 0) !== (+twLv || 1)) {
+    twLv = +c.lv;
+    localStorage.ttmikTwLv = twLv;
+    [...$('twLv').children].forEach(x => x.classList.toggle('on', +x.dataset.l === twLv));
+    renderList(); stats();
+  }
+  // 同上：跨届搜到别的届时，届次条也跟着切
+  if (SR(c) === 'tk' && tkEx && (+c.e || 0) !== tkEx) {
+    tkEx = +c.e;
+    localStorage.ttmikTkEx = tkEx;
+    [...$('tkEx').children].forEach(x => x.classList.toggle('on', +x.dataset.e === tkEx));
+    renderList(); stats();
+  }
+  LS.last = n;
+  // 让左侧列表跟到当前课（直接打开 ?n= 或自动跳下一课时也能定位）
+  const rowEl = rowsEl.querySelector(`.row[data-n="${n}"]`);
+  rowsEl.querySelectorAll('.row.on').forEach(e => e.classList.remove('on'));
+  if (rowEl) {
+    rowEl.classList.add('on');
+    requestAnimationFrame(() => rowEl.scrollIntoView({ block: 'center' }));
+  }
+  const data = LYR[n];
+  document.body.classList.remove('done');
+  if (freeOn) exitFree();      // 换课先退出自由浏览
+  const lines = data && data.lines ? data.lines : [];
+  const book = isBook(c);
+  const isTw = SR(c) === 'tw';
+  const isTk = SR(c) === 'tk';
+  document.body.classList.toggle('book', book);
+  document.body.classList.toggle('tw', isTw);
+  document.body.classList.toggle('tk', isTk);
+  if (SYN) ttsStop();          // 换篇/换课一律停朗读
+
+  $('idx').textContent = SERIES[series].tag(n);
+  $('ttl').innerHTML = isTk
+    ? `第 ${c.q} 题 <em>${c.scan ? '扫描原卷 · 识别文字仅供参考' : '文字版'}</em>`
+    : isTw
+    ? `${esc('UNIT ' + c.u)} <em>${esc((LVN[c.lv] || '') + ' · ' + lines.length + ' 词')}</em>`
+    : `${esc(c.ko || '')} <em>${esc(c.zh || '')}</em>`;
+  const { hasAu } = statusOf(c);
+  const b = [];
+  if (isTk) {
+    b.push(`<span class="bdg ok">第 ${c.e} 届</span>`);
+    b.push(`<span class="bdg">읽기 ${c.q}번</span>`);
+    if (c.img) b.push('<span class="bdg warn">题干为图表 · 已截原卷</span>');
+    if (c.scan) b.push('<span class="bdg warn">扫描版</span>');
+    b.push(`<span class="bdg">原书 p.${c.p}</span>`);
+  } else if (isTw) {
+    b.push('<span class="bdg warn">无录音 · 点条目朗读</span>');
+    b.push(`<span class="bdg">${lines.length} 个词</span>`);
+    b.push(`<span class="bdg ${c.lv === 1 ? 'ok' : ''}">${LVN[c.lv] || ''}</span>`);
+  } else if (book) {
+    b.push(SR(c) === 'ys'
+      ? '<span class="bdg warn">无录音 · 用朗读</span>'
+      : `<span class="bdg ok">原书 p.${c.p0 || '?'}</span>`);
+    if (lines.length) b.push(`<span class="bdg">${lines.length} 段</span>`);
+  } else if (data) {
+    b.push(`<span class="bdg ${data.src === 'pdf' ? 'ok' : 'warn'}">${data.src === 'pdf' ? 'PDF 原文' : '自动识别字幕'}</span>`);
+  }
+  if (!data) b.push('<span class="bdg">无字幕</span>');
+  if (!hasAu && !book) b.push('<span class="bdg warn">线上版无音频</span>');
+  if (data && data.dur) b.push(`<span class="bdg">${fmt(data.dur)}</span>`);
+  $('badges').innerHTML = b.join('');
+
+  // 歌词 / 词卡
+  const names = [...new Set(lines.map(l => l.sp).filter(Boolean))];
+  const palette = ['#8fc8ff', '#ffc48f', '#b6a8ff', '#7fd1c1', '#ffa8c0'];
+  const colOf = n => palette[names.indexOf(n) % palette.length];
+  const quote = (book && data && data.quote && data.quote.length)
+    ? `<div class="bk-quote">${data.quote.map(q => esc(q)).join('<br>')}</div>` : '';
+  if (isTk) {
+    const note = shortNote(c.zh);
+    let html = note ? `<div class="tk-lbl">${esc(note)}</div>` : '';
+    if (c.img) {
+      html += `<div class="tkimg"><img src="_tk/img/${esc(c.img)}" alt="原卷题干"></div>`;
+    }
+    html += lines.map((l, i) =>
+      `<div class="line tk-${l.c || 'q'}" data-i="${i}"><span class="who"></span><span class="txt"></span></div>`).join('');
+    listEl.innerHTML = html;
+    txts = [...listEl.querySelectorAll('.line .txt')];
+    lines.forEach((l, i) => { if (txts[i]) txts[i].textContent = l.t; });
+    emptyEl.classList.toggle('show', !lines.length && !c.img);
+    activeIdx = -1;
+    updateWho();
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+    $('play').disabled = true;
+    $('tcur').textContent = '0:00';
+    $('tdur').textContent = '--:--';
+    const sp0 = LS.pos[n] || 0;
+    requestAnimationFrame(() => {
+      stageEl.scrollTop = sp0;
+      $('bkProg').textContent = Math.round(sp0 / Math.max(1, stageEl.scrollHeight - stageEl.clientHeight) * 100) + '%';
+    });
+    renderNb({ top: 1 });
+    return;
+  }
+  if (isTw) {
+    listEl.innerHTML = lines.map((l, i) =>
+      `<div class="line" data-i="${i}">
+        <span class="wc-n">${l.i || ''}</span>
+        <span class="txt">
+          <span class="wc-h"><b class="wc-w">${esc(l.t || '')}</b>${l.m ? `<i class="wc-m">${esc(l.m)}</i>` : ''}</span>
+          ${l.e ? `<span class="wc-e">${esc(l.e)}</span>` : ''}
+          ${l.z ? `<span class="wc-z">${esc(l.z)}</span>` : ''}
+        </span>
+      </div>`).join('');
+    txts = [];
+    emptyEl.classList.toggle('show', !lines.length);
+    activeIdx = -1;
+    updateWho();
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+    $('play').disabled = true;
+    const sp0 = LS.pos[n] || 0;
+    requestAnimationFrame(() => {
+      stageEl.scrollTop = sp0;
+      $('bkProg').textContent = Math.round(sp0 / Math.max(1, stageEl.scrollHeight - stageEl.clientHeight) * 100) + '%';
+    });
+    renderNb({ top: 1 });
+    return;
+  }
+  listEl.innerHTML = quote + lines.map((l, i) =>
+    `<div class="line" data-i="${i}"><span class="who" style="color:${l.sp ? colOf(l.sp) : 'transparent'}">${l.sp ? esc(String(l.sp).slice(0, 3)) : ''}</span><span class="txt"></span></div>`
+  ).join('');
+  txts = [...listEl.querySelectorAll('.txt')];
+  lines.forEach((l, i) => { txts[i].textContent = l.t; });
+  if (!lines.length) { txts = []; }
+  emptyEl.classList.toggle('show', !lines.length);
+  activeIdx = -1;
+  updateWho();
+
+  // 音频
+  document.querySelectorAll('.row').forEach(r => r.classList.toggle('on', r.dataset.n == n));
+  if (book) {
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+    $('play').disabled = true;
+    const sp = LS.pos[n] || 0;
+    requestAnimationFrame(() => { stageEl.scrollTop = sp; $('bkProg').textContent = Math.round(sp / Math.max(1, stageEl.scrollHeight - stageEl.clientHeight) * 100) + '%'; });
+    renderNb({ top: 1 });
+    return;
+  }
+  stageEl.scrollTop = 0;
+  if (hasAu) {
+    const tgt = at || resumeAt(n);
+    audio.src = encodeURI(c.f);
+    audio._pendingSeek = tgt;
+    audio.load();
+    $('play').disabled = false;
+    if (play) audio.play().catch(() => { });
+  } else {
+    audio.removeAttribute('src');
+    audio.load();
+    $('play').disabled = true;
+    $('tcur').textContent = '0:00';
+    $('tdur').textContent = '--:--';
+  }
+  requestAnimationFrame(() => centerOn(-1, false));
+  renderNb({ top: 1 });
+}
+
+function updateWho() {
+  // 无 sp 标签的课程隐藏说话人徽标
+  const any = CLA();
+  document.body.classList.toggle('nocast', !any);
+}
+function CLA() { const d = LYR[cur && cur.n]; return !!(d && d.lines && d.lines.some(l => l.sp)); }
+
+let txts = [];
+function centerOn(i, animate = true) {
+  if (document.body.classList.contains('book')) { listEl.style.transform = 'none'; return; }
+  if (freeOn) { if (i >= 0) followActive(i); return; }
+  if (i < 0) { listEl.style.transform = 'translateY(0px)'; return; }
+  const el = listEl.children[i];
+  if (!el) return;
+  const y = -(el.offsetTop + el.offsetHeight / 2);
+  if (!animate) listEl.style.transition = 'none';
+  listEl.style.transform = `translateY(${y}px)`;
+  if (!animate) requestAnimationFrame(() => { listEl.style.transition = ''; });
+}
+const lines = () => (LYR[cur && cur.n] ? LYR[cur.n].lines : []);
+
+/* ---------- 自由浏览：字幕不再锁死在当前句 ---------- */
+let freeOn = false;
+let freeUserAt = 0;      // 用户最后一次手动滚动的时间
+let freeSelf = 0;        // 标记「这次滚动是我自己发起的」
+function enterFree(dy) {
+  if (freeOn || document.body.classList.contains('book')) return;
+  freeOn = true;
+  document.body.classList.add('free');
+  // 同步把位置算好：中间若插一帧，用户接着滚的那段距离会被随后的赋值冲掉，看着就是"滑一下又弹回去"
+  const H = stageEl.clientHeight || 1;          // 这里已计入 freebar 出现后的新高度
+  const pad = Math.max(60, Math.round(H / 2) - 30);
+  listEl.style.paddingTop = pad + 'px';
+  listEl.style.paddingBottom = pad + 'px';
+  const el = activeIdx >= 0 ? listEl.children[activeIdx] : null;
+  const base = el ? el.offsetTop + el.offsetHeight / 2 - H / 2 : 0;   // 读 offsetTop 会强制重排，拿到新 padding
+  // 只定位到当前句，不自己再加 dy：浏览器在事件之后还会按 deltaY 原生滚一次，加了就等于滚两倍
+  stageEl.scrollTop = Math.max(0, base);
+  freeUserAt = performance.now();
+}
+function exitFree() {
+  if (!freeOn) return;
+  freeOn = false;
+  document.body.classList.remove('free');
+  listEl.style.paddingTop = '';
+  listEl.style.paddingBottom = '';
+  requestAnimationFrame(() => centerOn(activeIdx, false));
+}
+// 自由浏览时只在「当前句整句跑出视野」才回拉，且用户刚滚过就先不管
+function followActive(i) {
+  if (document.body.classList.contains('pick')) return;      // 正在拖选，别动
+  if (performance.now() - freeUserAt < 3000) return;          // 刚手动滚过，先别管
+  const el = listEl.children[i];
+  if (!el) return;
+  const H = stageEl.clientHeight || 1;
+  const top = el.offsetTop, bot = top + el.offsetHeight;
+  const vT = stageEl.scrollTop, vB = vT + H;
+  if (bot > vT + 12 && top < vB - 12) return;                 // 还露在屏幕上就别抢滚动条
+  freeSelf = performance.now();
+  stageEl.scrollTo({ top: Math.max(0, top + el.offsetHeight / 2 - H / 2), behavior: 'smooth' });
+}
+stageEl.addEventListener('scroll', () => {
+  if (!freeOn) return;
+  if (performance.now() - freeSelf < 700) return;            // 自己滚的，不算用户操作
+  freeUserAt = performance.now();
+}, { passive: true });
+$('freeBack').onclick = () => { exitFree(); toast('已回到当前句'); };
+stageEl.addEventListener('wheel', e => {
+  if (freeOn || document.body.classList.contains('book')) return;
+  if (Math.abs(e.deltaY) < 2) return;
+  enterFree(e.deltaY);
+}, { passive: true });
+stageEl.addEventListener('touchstart', () => {
+  if (!freeOn && !document.body.classList.contains('book')) enterFree();
+}, { passive: true });
+
+function idxAt(t) {
+  const L = lines(); let lo = 0, hi = L.length - 1, r = -1;
+  while (lo <= hi) { const m = (lo + hi) >> 1; if (L[m].s <= t) { r = m; lo = m + 1; } else hi = m - 1; }
+  return r;
+}
+function setActive(i) {
+  const L = lines();
+  if (i === activeIdx) return;
+  if (activeIdx >= 0 && listEl.children[activeIdx]) listEl.children[activeIdx].classList.remove('active', 'next');
+  activeIdx = i;
+  [...listEl.children].forEach((n, k) => {
+    n.classList.toggle('past', k < i); n.classList.toggle('next', k === i + 1);
+  });
+  if (i >= 0 && listEl.children[i]) { listEl.children[i].classList.add('active'); centerOn(i); }
+}
+
+/* ---------- 主循环 ---------- */
+let lastSave = 0;
+function tick() {
+  if (document.body.classList.contains('book')) { tickOn = false; return; }
+  tickOn = true;
+  const L = lines();
+  const t = audio.currentTime - offset;
+  const i = idxAt(t);
+  if (i !== activeIdx) setActive(i);
+  if (i >= 0 && L[i]) {
+    const p = Math.min(1, Math.max(0, (t - L[i].s) / Math.max(.35, L[i].e - L[i].s)));
+    if (txts[i]) txts[i].style.setProperty('--p', (p * 100).toFixed(2) + '%');
+    if (loopOne && audio.currentTime - offset > L[i].e + 0.25) audio.currentTime = L[i].s + offset;
+  }
+  if (audio.duration) {
+    const r = audio.currentTime / audio.duration;
+    $('fill').style.width = (r * 100) + '%';
+    $('knob').style.left = (r * 100) + '%';
+    $('tcur').textContent = fmt(audio.currentTime);
+  }
+  // 进度存盘（每 3 秒）
+  if (cur && audio.currentTime > 3 && Date.now() - lastSave > 3000) {
+    lastSave = Date.now();
+    const p = LS.pos; p[cur.n] = audio.currentTime; LS.pos = p;
+  }
+  if (tickOn) requestAnimationFrame(tick);
+}
+
+/* ---------- 控件 ---------- */
+function togglePlay() {
+  if (!audio.paused) { audio.pause(); return; }
+  // 已经播到底了：这一下应该从头听，而不是原地"开→立刻结束"
+  if (audio.duration && audio.currentTime >= audio.duration - 0.5) audio.currentTime = 0;
+  audio.play().catch(() => { });
+}
+$('play').onclick = togglePlay;
+audio.onplay = () => {
+  $('icon').innerHTML = '<path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/>';
+  document.body.classList.remove('done');
+};
+audio.onpause = () => { $('icon').innerHTML = '<path d="M8 5v14l11-7z" fill="currentColor"/>'; };
+audio.onloadedmetadata = () => {
+  $('tdur').textContent = fmt(audio.duration);
+  if (audio._pendingSeek) { audio.currentTime = audio._pendingSeek; audio._pendingSeek = 0; }
+};
+audio.onended = () => {
+  const done = cur && cur.n;
+  const nx = autoNext ? nextLesson(done, 1) : null;
+  if (nx) { load(nx, 0, true); return; }
+  // 停在原地，把选择权交回去：整课听完了，是重听还是往下走
+  document.body.classList.add('done');
+  const nx2 = nextLesson(done, 1);
+  $('doneNext').style.display = nx2 ? '' : 'none';
+  $('doneNext').onclick = () => { if (nx2) load(nx2, 0, true); };
+  $('doneReplay').onclick = () => { document.body.classList.remove('done'); audio.currentTime = 0; audio.play().catch(() => { }); };
+};
+audio.onerror = () => { if (cur && cur.f) toast('音频读取失败，确认文件还在原位置'); };
+
+function goLine(i) {
+  const L = lines(); if (!L.length) return;
+  i = Math.max(0, Math.min(L.length - 1, i));
+  const el = listEl.querySelector(`.line[data-i="${i}"]`);
+  if (document.body.classList.contains('book')) {
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    return;
+  }
+  // 自由浏览里点句子：只把播放位置挪过去，不要把人踢回卡拉OK模式
+  if (freeOn) {
+    if (el) {
+      freeSelf = performance.now() + 400;
+      stageEl.scrollTo({ top: Math.max(0, el.offsetTop + el.offsetHeight / 2 - stageEl.clientHeight / 2), behavior: 'smooth' });
+    }
+  }
+  audio.currentTime = L[i].s + offset;
+  if (audio.paused) audio.play().catch(() => { });
+  if (el) { el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 900); }
+}
+$('prev').onclick = () => {
+  const L = lines(); if (!L.length) return;
+  const at = audio.currentTime - offset, c = idxAt(at);
+  goLine(c < 0 ? 0 : (at - L[c].s < 1.5 ? c - 1 : c));
+};
+$('next').onclick = () => goLine(idxAt(audio.currentTime - offset) + 1);
+$('loop').onclick = e => { loopOne = !loopOne; e.currentTarget.classList.toggle('on', loopOne); toast(loopOne ? '循环当前句：开' : '循环当前句：关'); };
+$('speed').onclick = e => {
+  speedIdx = (speedIdx + 1) % speeds.length; audio.playbackRate = speeds[speedIdx];
+  e.currentTarget.textContent = String(speeds[speedIdx]) + '×';
+};
+$('minus').onclick = () => { offset -= 0.2; toast('字幕偏移 ' + offset.toFixed(1) + ' 秒'); };
+$('plus').onclick = () => { offset += 0.2; toast('字幕偏移 ' + offset.toFixed(1) + ' 秒'); };
+
+function nextLesson(n, dir) {
+  const c0 = byN[n];
+  if (!c0) return null;
+  const pool = CAT.filter(c => SR(c) === SR(c0)
+    && !(SR(c0) === 'tw' && (+c.lv || 0) !== (+twLv || 1)));
+  const i = pool.findIndex(c => c.n === n);
+  const needAu = !isBook(c0);   // 书没有音频，不能按 f 过滤，否则永远跳不动
+  for (let k = i + dir; k >= 0 && k < pool.length; k += dir) if (!needAu || pool[k].f) return pool[k].n;
+  return null;
+}
+
+let ysBook = localStorage.ttmikYsBook || '2';
+function syncSeries() {
+  [...$('series').children].forEach(x => x.classList.toggle('on', x.dataset.s === series));
+  document.body.classList.toggle('ys', series === 'ys');
+  document.body.classList.toggle('tw', series === 'tw');
+  document.body.classList.toggle('tk', series === 'tk');
+  $('sTitle').textContent = SERIES[series].title;
+  document.title = SERIES[series].title + ' · 字幕播放器';
+  localStorage.ttmikSeries = series;
+}
+$('twLv').addEventListener('click', e => {
+  const t = e.target.closest('.yb'); if (!t) return;
+  twLv = +t.dataset.l;
+  localStorage.ttmikTwLv = twLv;
+  [...$('twLv').children].forEach(x => x.classList.toggle('on', +x.dataset.l === twLv));
+  renderList(); stats();
+  const first = CAT.find(c => SR(c) === 'tw' && (+c.lv || 0) === twLv);
+  if (first) load(first.n, 0, false);
+});
+$('tkEx').addEventListener('click', e => {
+  const t = e.target.closest('.yb'); if (!t) return;
+  tkEx = +t.dataset.e;
+  localStorage.ttmikTkEx = tkEx;
+  [...$('tkEx').children].forEach(x => x.classList.toggle('on', +x.dataset.e === tkEx));
+  renderList(); stats();
+  const first = CAT.find(c => SR(c) === 'tk' && (+c.e || 0) === tkEx);
+  if (first) load(first.n, 0, false);
+});
+$('ysBooks').addEventListener('click', e => {  const t = e.target.closest('.yb'); if (!t) return;
+  ysBook = t.dataset.b;
+  localStorage.ttmikYsBook = ysBook;
+  [...$('ysBooks').children].forEach(x => x.classList.toggle('on', x.dataset.b === ysBook));
+  renderList(); stats();
+  const first = CAT.find(c => SR(c) === 'ys' && String(c.n).startsWith('y' + ysBook));
+  if (first) load(first.n, 0, false);
+});
+$('series').addEventListener('click', e => {
+  const t = e.target.closest('.sr'); if (!t || t.dataset.s === series) return;
+  series = t.dataset.s;
+  syncSeries();
+  filter = 'all'; query = '';
+  $('q').value = '';
+  [...$('tabs').children].forEach(x => x.classList.toggle('on', x.dataset.f === 'all'));
+  renderList(); stats();
+  const lastN = LS.last;
+  const okLast = lastN && byN[lastN] && SR(byN[lastN]) === series
+    && !(series === 'tw' && (+byN[lastN].lv || 0) !== (+twLv || 1));
+  const first = okLast ? byN[lastN]
+    : (CAT.find(c => SR(c) === series && !(series === 'tw' && (+c.lv || 0) !== (+twLv || 1)))
+      || CAT.find(c => SR(c) === series));
+  if (first) load(first.n, 0, false);
+});
+$('prevL').onclick = () => { const n = nextLesson(cur && cur.n, -1); if (n) load(n, 0, true); };
+$('nextL').onclick = () => { const n = nextLesson(cur && cur.n, 1); if (n) load(n, 0, true); };
+
+listEl.onclick = e => {
+  const el = e.target.closest('.line'); if (!el) return;
+  // 刚拖选完就松手时也会冒出一个 click，别把它当成「点这句跳过去」
+  const s = getSelection();
+  if (s && !s.isCollapsed && String(s).trim()) return;
+  if (document.body.classList.contains('tw')) { speakCard(+el.dataset.i); return; }
+  if (document.body.classList.contains('tk')) { speakCard(+el.dataset.i); return; }
+  goLine(+el.dataset.i);
+};
+
+/* 词卡点一下：读「单词 + 例句」 */
+let cardGen = 0;
+function speakCard(i) {
+  const L = lines();
+  const l = L[i];
+  if (!l || !SYN) return toast('这个浏览器不支持朗读');
+  if (!ttsOn) pickVoice();
+  ttsStop();
+  const g = ++cardGen;
+  ttsOn = true;
+  $('bkPlay').textContent = '■ 停止';
+  $('bkPlay').classList.add('on');
+  ttsMark(i);
+  const txt = [l.t, l.e].filter(Boolean).join('. ');
+  const say = (t, onEnd, voice) => {
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = 'ko-KR';
+    if (voice) u.voice = voice;
+    u.rate = Math.min(1, ttsRate);
+    u.onend = onEnd;
+    u.onerror = onEnd;
+    try { SYN.speak(u); } catch (e) { onEnd(); }
+  };
+  const done = () => {
+    if (g !== cardGen) return;
+    ttsOn = false;
+    $('bkPlay').textContent = '▶ 朗读';
+    $('bkPlay').classList.remove('on');
+  };
+  say(txt, () => {
+    // 神经音色在部分机器上不发声，退回 Heami 再读一次
+    if (g !== cardGen) return;
+    const vs = (SYN.getVoices() || []);
+    const heami = vs.find(v => /^ko/i.test(v.lang) && /heami/i.test(v.name));
+    if (heami && ttsVoice && heami.name !== ttsVoice.name) {
+      say(txt, done, heami);
+    } else done();
+  }, ttsVoice);
+}
+
+rowsEl.onclick = e => {
+  const r = e.target.closest('.row'); if (!r) return;
+  const c = byN[r.dataset.n];
+  if (!c) return;
+  if (!c.f && !isBook(c)) { toast(`${c.k || c.n} 的音频还没下载`); return; }
+  load(c.n, 0, !isBook(c));
+  if (window.innerWidth <= 900) document.body.classList.remove('open');
+};
+
+$('sideToggle').onclick = () => document.body.classList.toggle('open');
+
+/* 进度条 */
+const seek = $('seek'); let dragging = false;
+function seekTo(e) {
+  const r = seek.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+  const p = Math.min(1, Math.max(0, x / r.width));
+  if (audio.duration) audio.currentTime = p * audio.duration;
+}
+seek.addEventListener('pointerdown', e => { dragging = true; try { seek.setPointerCapture(e.pointerId) } catch (_) { } seekTo(e); });
+seek.addEventListener('pointermove', e => { if (dragging) seekTo(e); });
+seek.addEventListener('pointerup', () => dragging = false);
+seek.addEventListener('pointercancel', () => dragging = false);
+
+/* 搜索 / 过滤 */
+$('q').addEventListener('input', e => { query = e.target.value; renderList(); });
+$('tabs').addEventListener('click', e => {
+  const t = e.target.closest('.tab'); if (!t) return;
+  filter = t.dataset.f;
+  [...$('tabs').children].forEach(x => x.classList.toggle('on', x === t));
+  renderList();
+});
+
+/* 键盘 */
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'BUTTON') e.target.blur();
+  if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
+  const L = lines();
+  if (document.body.classList.contains('book')) {
+    switch (e.key) {
+      case '[': $('prevL').click(); break;
+      case ']': $('nextL').click(); break;
+      case '/': e.preventDefault(); $('q').focus(); break;
+      case 'w': case 'W':
+        captureSel();
+        if (selText && pill.classList.contains('show')) {
+          addWord(selText, selTime); hidePill();
+          const s = getSelection(); if (s) s.removeAllRanges();
+        }
+        break;
+    }
+    return;
+  }
+  switch (e.key) {
+    case ' ': e.preventDefault(); togglePlay(); break;
+    case 'ArrowLeft': audio.currentTime = Math.max(0, audio.currentTime - 5); break;
+    case 'ArrowRight': audio.currentTime = Math.min(audio.duration || 1e9, audio.currentTime + 5); break;
+    case 'ArrowUp': e.preventDefault(); if (L.length) $('prev').click(); break;
+    case 'ArrowDown': e.preventDefault(); if (L.length) $('next').click(); break;
+    case 'r': case 'R': $('loop').click(); break;
+    case '[': $('prevL').click(); break;
+    case ']': $('nextL').click(); break;
+    case '/': e.preventDefault(); $('q').focus(); break;
+    case 'w': case 'W':
+      captureSel();
+      if (selText && pill.classList.contains('show')) {
+        addWord(selText, selTime); hidePill();
+        const s = getSelection(); if (s) s.removeAllRanges();
+      }
+      break;
+  }
+});
+window.addEventListener('resize', () => centerOn(activeIdx, false));
+
+/* toast */
+function toast(msg) {
+  const el = $('toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 1600);
+}
+
+/* ---------- 单词本 ---------- */
+/* ================= 自动释义 ================= */
+/* 自动释义引擎
+   · 大意：本地精确词条 → 在线翻译（MyMemory）→ 缓存
+   · 搭配：只在明确的语法形式上做识别，不做分词（避免乱切）
+*/
+
+const W_D = (typeof window !== 'undefined' ? window.WDICT : global.WDICT) || {};
+const W_P = (typeof window !== 'undefined' ? window.WPHRASE : global.WPHRASE) || {};
+
+function wNorm(t) {
+  return String(t || '').replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+/* ---------- 固定搭配：只认这几种明确形式 ---------- */
+// 出现在任何位置（形式独特，不会误伤）
+const MID = [
+  ['게됐', '-게 되다', '结果变成…'],
+  ['게되었', '-게 되다', '结果变成…'],
+  ['게되', '-게 되다', '会变成…'],
+  ['고있', '-고 있다', '正在…'],
+  ['고계시', '-고 계시다', '正在…（敬语）'],
+  ['어있', '-아/어 있다', '…着（状态持续）'],
+  ['아있', '-아/어 있다', '…着（状态持续）'],
+  ['것같', '-것 같다', '好像…'],
+  ['거같', '-것 같다', '好像…'],
+  ['수있', '-수 있다', '能…'],
+  ['수없', '-수 없다', '不能…'],
+  ['수도있', '-수도 있다', '也可能…'],
+  ['야하', '-아/어야 하다', '必须…'],
+  ['어야하', '-아/어야 하다', '必须…'],
+  ['지말', '-지 말다', '别…'],
+  ['어보', '-아/어 보다', '试着…'],
+  ['아보', '-아/어 보다', '试着…'],
+  ['어주', '-아/어 주다', '替／给…做'],
+  ['아주', '-아/어 주다', '替／给…做'],
+  ['어놓', '-아/어 놓다', '先…好'],
+  ['아놓', '-아/어 놓다', '先…好'],
+  ['어버리', '-아/어 버리다', '…掉了'],
+  ['기로했', '-기로 하다', '决定…'],
+  ['려고', '-려고', '想要…（打算）'],
+  ['으려고', '-려고', '想要…（打算）'],
+  ['면서', '-면서', '一边…一边…'],
+  ['으면서', '-면서', '一边…一边…'],
+  ['때문에', '-기 때문에', '因为…'],
+  ['바람에', '-는 바람에', '因为…（不好的结果）'],
+  ['더라도', '-더라도', '即使…也'],
+  ['어야겠', '-아/어야겠다', '得…了'],
+  ['아야겠', '-아/어야겠다', '得…了'],
+  ['으면좋겠', '-면 좋겠다', '希望…'],
+  ['모양이', '-모양이다', '看样子…'],
+  ['나보', '-나 보다', '看来…'],
+  ['는편이', '-는 편이다', '属于…那种'],
+  ['기마련', '-기 마련이다', '必然…'],
+  ['는대신', '-는 대신', '代替／反而…'],
+  ['는데도', '-는데도', '明明…却'],
+  ['불구하고', '불구하고', '尽管…'],
+  ['밖에없', '밖에 없다', '只有…'],
+  ['수밖에', '-수밖에 없다', '只能…'],
+  ['고싶', '-고 싶다', '想要…'],
+  ['면좋겠', '-면 좋겠다', '希望…'],
+  ['었으면좋겠', '-면 좋겠다', '希望…'],
+  ['니까', '-니까', '因为…／所以…'],
+  ['어서', '-아/어서', '因为…／…然后'],
+  ['아서', '-아/어서', '因为…／…然后'],
+  ['기시작', '-기 시작하다', '开始…'],
+  ['는중이', '-는 중이다', '正在…（进行中）'],
+];
+
+// 只认「末尾」的语言结尾
+const TAIL = [
+  ['습니다', '-습니다', '正式敬语结尾'],
+  ['ㅂ니다', '-ㅂ니다', '正式敬语结尾'],
+  ['인데요', '-는데', '…但／…（铺垫）'],
+  ['는데요', '-는데', '…但／…（铺垫）'],
+  ['은데요', '-는데', '…但／…（铺垫）'],
+  ['거든요', '-거든요', '（说明理由）因为…'],
+  ['잖아요', '-잖아요', '不是…吗（提醒）'],
+  ['더라고요', '-더라고요', '（回忆亲历）我发现…'],
+  ['텐데', '-텐데', '本来应该…（可惜）'],
+  ['는데', '-는데', '…但／…（铺垫）'],
+  ['은데', '-는데', '…但／…（铺垫）'],
+  ['인데', '-는데', '…但／…（铺垫）'],
+  ['지만', '-지만', '…但是'],
+  ['냐고', '-냐고', '（引语）问…'],
+  ['다고', '-다고', '（引语）说…'],
+  ['자고', '-자고', '（引语）提议一起…'],
+  ['라고', '-라고', '（引语）叫做／让…'],
+  ['군요', '-군요', '原来…啊'],
+  ['네요', '-네요', '…啊（感叹／新发现）'],
+  ['지요', '-지요', '…吧（确认）'],
+  ['죠', '-죠', '…吧（确认）'],
+  ['예요', '-이에요', '是…'],
+  ['이에요', '-이에요', '是…'],
+  ['아요', '-아/어요', '口语敬语结尾'],
+  ['어요', '-아/어요', '口语敬语结尾'],
+  ['여요', '-아/어요', '口语敬语结尾'],
+  ['까지', '까지', '到…为止'],
+  ['부터', '부터', '从…开始'],
+  ['한테', '한테', '给／向（人）'],
+  ['에게', '에게', '给／向（人）'],
+  ['에서', '에서', '在…／从…'],
+  ['처럼', '처럼', '像…一样'],
+  ['만큼', '만큼', '和…一样（程度）'],
+  ['정도', '정도', '…程度／左右'],
+  ['마다', '마다', '每…'],
+];
+
+// 末尾剥完就没信息量的，不显示
+const DROP = new Set(['口语敬语结尾', '正式敬语结尾', '-아/어요']);
+
+function gramNotes(text) {
+  const s = wNorm(text);
+  if (!s) return { list: [], rest: s };
+  const out = [];
+  const seen = new Set();
+  const push = (form, note) => {
+    if (!seen.has(form)) { seen.add(form); out.push({ form, note }); }
+  };
+  // 1) 任何位置的形式
+  for (const [k, form, note] of MID) {
+    if (s.indexOf(k) >= 0) push(form, note);
+  }
+  // 2) 末尾的语言结尾（最多剥两层，避免叠加噪音）
+  let rest = s;
+  for (let i = 0; i < 2; i++) {
+    let hit = null;
+    for (const [f, form, note] of TAIL) {
+      if (rest.length >= f.length && rest.endsWith(f)) { hit = [f, form, note]; break; }
+    }
+    if (!hit) break;
+    push(hit[1], hit[2]);
+    rest = rest.slice(0, rest.length - hit[0].length);
+  }
+  return { list: out.filter(x => !DROP.has(x.note)), rest };
+}
+
+/* ---------- 大意：本地精确命中（保守，不乱切） ---------- */
+const WD_TAILS = ['었어요', '았어요', '겠어요', '습니다', 'ㅂ니다', '었', '았', '했', '어요', '아요', '여요',
+  '게', '에요', '예요', '요', '다', '를', '을', '이', '가', '은', '는', '에', '도', '만', '와', '과', '의', '로', '서', '께',
+  '들', '하고', '해서'];
+
+function lookOne(w) {
+  if (!w) return '';
+  if (W_D[w]) return W_D[w];
+  if (W_P[w]) return W_P[w];
+  for (const t of ['다', '하다', '지다', '되다', '시키다']) if (W_D[w + t]) return W_D[w + t];
+  for (const t of WD_TAILS) {
+    if (w.length > t.length && w.endsWith(t)) {
+      const c = w.slice(0, w.length - t.length);
+      const r = W_D[c] || W_D[c + '다'] || W_D[c + '하다'] || W_D[c + '지다'];
+      if (r) return r;
+    }
+  }
+  return '';
+}
+
+function pureGramGloss(text) {
+  const g = gramNotes(text);
+  if (!g.list.length) return '';
+  // 剥掉语法后剩下的不足一个字 → 整条就是语法
+  if (g.rest.length <= 1) return g.list.map(x => x.form + ' ' + x.note).join(' · ');
+  return '';
+}
+
+function localGloss(text) {
+  const raw = String(text || '').trim().replace(/\s+/g, ' ');
+  if (!raw) return '';
+  const s = wNorm(raw);
+  if (W_P[s]) return W_P[s];
+  if (W_D[s]) return W_D[s];
+  for (const t of ['다', '하다', '지다', '되다', '시키다']) if (W_D[s + t]) return W_D[s + t];
+  // 多词：全部命中才拼，否则交给在线（半截的词意比没有更误导）
+  const ws = raw.split(/\s+/).filter(Boolean);
+  if (ws.length > 1) {
+    if (ws.length > 3) return pureGramGloss(raw);      // 长句不拼词，交给整句翻译
+    const got = ws.map(lookOne);
+    if (got.every(Boolean)) return got.join(' · ');
+    return pureGramGloss(raw);
+  }
+  return lookOne(ws[0]) || pureGramGloss(raw);
+}
+
+/* ---------- 在线：MyMemory ---------- */
+const GLOSS_KEY = 'ttmikGloss';
+function glossCache() {
+  try { const v = JSON.parse(localStorage[GLOSS_KEY] || '{}'); return v && typeof v === 'object' ? v : {} }
+  catch (e) { return {} }
+}
+function glossCacheSet(q, a) {
+  const c = glossCache();
+  c[q] = a;
+  try { localStorage[GLOSS_KEY] = JSON.stringify(c); } catch (e) { }
+}
+function badTrans(s) {
+  if (!s) return true;
+  const t = String(s).trim();
+  if (!t) return true;
+  if (/PLEASE SELECT|MYMEMORY WARNING|QUERY LENGTH LIMIT|INVALID/i.test(t)) return true;
+  // 韩译中却一个汉字都没有 → 多半是把原文音译/回显了，没意义
+  if (!/[\u4e00-\u9fff]/.test(t)) return true;
+  return false;
+}
+async function onlineGloss(text) {
+  const q = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!q) return '';
+  const c = glossCache();
+  if (c[q]) return c[q];
+  let use = q;
+  // 接口上限 500 字节
+  while (BufferLike(use) > 480 && use.length > 8) use = use.slice(0, -2);
+  const url = 'https://api.mymemory.translated.net/get?langpair=ko|zh-CN&q=' + encodeURIComponent(use);
+  const r = await fetch(url, { method: 'GET' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  const t = j && j.responseData && j.responseData.translatedText;
+  if (badTrans(t)) throw new Error('no result');
+  glossCacheSet(q, t);
+  return t;
+}
+function BufferLike(s) { return encodeURIComponent(s).replace(/%[0-9A-F]{2}/g, 'x').length; }
+
+const WBK = 'ttmikWords';        // 主存储
+const WBB = 'ttmikWordsBak';     // 镜像：任何一次写入变少，都先把「多的那份」留在这里
+const WBD = 'ttmikWordsDel';     // 墓碑：删掉的 id，防止陈旧副本把它带回来
+/* 2026-11-01：旧版导出的单词本（27 条）作为内置种子。
+   预览面板每次是新的 localStorage 桶，靠这个保证「打开就有」；删掉会写墓碑，不会被复活。 */
+const WB_SEED = [{"id":"old01","w":"종각에","m":"","locs":[{"n":2,"t":106}],"ts":1730000000000},{"id":"old02","w":"전자 제품","m":"","locs":[{"n":2,"t":150}],"ts":1730000000001},{"id":"old03","w":"돈을 많이 벌고 있는 것 같아요.","m":"","locs":[{"n":2,"t":150}],"ts":1730000000002},{"id":"old04","w":"사는 거에요","m":"","locs":[{"n":2,"t":180}],"ts":1730000000003},{"id":"old05","w":"종로에 있는","m":"","locs":[{"n":2,"t":218}],"ts":1730000000004},{"id":"old06","w":"의자를 놨어요","m":"","locs":[{"n":2,"t":223}],"ts":1730000000005},{"id":"old07","w":"인데요","m":"","locs":[{"n":3,"t":26}],"ts":1730000000006},{"id":"old08","w":"13 일의 금요일","m":"","locs":[{"n":3,"t":66}],"ts":1730000000007},{"id":"old09","w":"귀찮게","m":"","locs":[{"n":3,"t":97}],"ts":1730000000008},{"id":"old10","w":"그것에 대해서","m":"","locs":[{"n":3,"t":113}],"ts":1730000000009},{"id":"old11","w":"따로 떨어져 살죠?","m":"","locs":[{"n":3,"t":145}],"ts":1730000000010},{"id":"old12","w":"그때 그때 잘 풀죠?","m":"","locs":[{"n":3,"t":175}],"ts":1730000000011},{"id":"old13","w":"딱 부르고 나면,","m":"","locs":[{"n":3,"t":212}],"ts":1730000000012},{"id":"old14","w":"많이 풀리더라고요","m":"","locs":[{"n":3,"t":284}],"ts":1730000000013},{"id":"old15","w":"사람들한테 피해 주지 말고","m":"","locs":[{"n":3,"t":329}],"ts":1730000000014},{"id":"old16","w":"특히 남이 보는 데서 울지 않습니다","m":"","locs":[{"n":3,"t":371}],"ts":1730000000015},{"id":"old17","w":"살쪘다고 말하지 마세요","m":"","locs":[{"n":3,"t":431}],"ts":1730000000016},{"id":"old18","w":"그런 평범한 게 가장 효율적인 거 아닐까요?","m":"","locs":[{"n":3,"t":463}],"ts":1730000000017},{"id":"old19","w":"제대로","m":"","locs":[{"n":3,"t":497}],"ts":1730000000018},{"id":"old20","w":"아쉬워했다는 얘기가 있던데?","m":"","locs":[{"n":4,"t":45}],"ts":1730000000019},{"id":"old21","w":"썰렁한 농담들을","m":"","locs":[{"n":4,"t":52}],"ts":1730000000020},{"id":"old22","w":"오히려","m":"","locs":[{"n":4,"t":103}],"ts":1730000000021},{"id":"old23","w":"떨느냐에 따라서 친구를 구분하는 것 같기도 해요.","m":"","locs":[{"n":4,"t":143}],"ts":1730000000022},{"id":"old24","w":"가벼운 이야기","m":"","locs":[{"n":4,"t":155}],"ts":1730000000023},{"id":"old25","w":"연예인 얘기도 막 하다가 두 시간 동안 막","m":"","locs":[{"n":4,"t":181}],"ts":1730000000024},{"id":"old26","w":"진지한 사람이군요","m":"","locs":[{"n":4,"t":246}],"ts":1730000000025},{"id":"old27","w":"몰래","m":"","locs":[{"n":4,"t":273}],"ts":1730000000026}];
+let WB_DEAD = false;
+
+function wbRaw(k) {
+  try { const v = JSON.parse(localStorage[k] || '[]'); return Array.isArray(v) ? v : [] }
+  catch (e) { return [] }
+}
+function wbTomb() {
+  try { const v = JSON.parse(localStorage[WBD] || '{}'); return v && typeof v === 'object' ? v : {} }
+  catch (e) { return {} }
+}
+function wbFix(w) {                       // 老格式 {n,t} → {locs:[{n,t}]}
+  if (!w) return w;
+  if (!Array.isArray(w.locs)) {
+    w.locs = (w.n == null ? [] : [{ n: w.n, t: w.t == null ? null : w.t }]);
+    delete w.n; delete w.t;
+  }
+  return w;
+}
+function wbMerge(a, b) {
+  const locs = (a.locs || []).slice();
+  (b.locs || []).forEach(l => {
+    if (!locs.some(x => x.n === l.n && Math.abs((x.t == null ? 0 : x.t) - (l.t == null ? 0 : l.t)) < 2)) locs.push(l);
+  });
+  const m = a.m || b.m || '';
+  const ga = m ? ((a.m ? a.ga : b.ga) || 0) : 0;
+  return { id: a.id, w: a.w, m, ga, locs, ts: Math.min(a.ts || 9e15, b.ts || 9e15) };
+}
+/* 读：主存储 ∪ 镜像，去掉墓碑。任何一处被冲掉都能自愈。 */
+function wbAll() {
+  const dead = wbTomb(), map = new Map();
+  [...wbRaw(WBB), ...wbRaw(WBK)].forEach(w => {
+    if (!w || !w.id || dead[w.id]) return;
+    const p = map.get(w.id);
+    map.set(w.id, p ? wbMerge(p, w) : wbFix(w));
+  });
+  WB_SEED.forEach(sd => {
+    if (dead[sd.id]) return;
+    const p = map.get(sd.id), c = JSON.parse(JSON.stringify(sd));
+    map.set(sd.id, p ? wbMerge(p, c) : wbFix(c));
+  });
+  const out = [...map.values()];
+  try {                                    // 镜像比主存储少 → 立刻补齐（下次被冲掉才有得救）
+    if (wbRaw(WBB).length < out.length) localStorage[WBB] = JSON.stringify(out);
+  } catch (e) { }
+  return out;
+}
+function wbSave(v) {
+  const dead = wbTomb();
+  const keep = v.filter(w => w && w.id && !dead[w.id]).map(wbFix);
+  try {
+    const old = wbRaw(WBK);
+    if (old.length > keep.length) localStorage[WBB] = JSON.stringify(old);   // 先留底再写
+    localStorage[WBK] = JSON.stringify(keep);
+    const m = new Map(wbRaw(WBB).map(w => [w.id, w]));
+    keep.forEach(w => m.set(w.id, w));
+    localStorage[WBB] = JSON.stringify([...m.values()]);
+  } catch (e) {
+    if (!WB_DEAD) { WB_DEAD = true; console.warn('localStorage 写入失败', e); }
+  }
+}
+function wbDel(id) {
+  try {
+    const d = wbTomb(); d[id] = Date.now();
+    const ks = Object.keys(d);
+    if (ks.length > 800) ks.slice(0, ks.length - 800).forEach(k => delete d[k]);
+    localStorage[WBD] = JSON.stringify(d);
+  } catch (e) { }
+  wbSave(wbAll());
+}
+const byNT = (a, b) => {
+  const num = typeof a.n === 'number' && typeof b.n === 'number';
+  const c = num ? a.n - b.n : String(a.n).localeCompare(String(b.n), 'ko');
+  return c || ((a.t == null ? 1e9 : a.t) - (b.t == null ? 1e9 : b.t));
+};
+function locOf(w, scope) {
+  if (scope === 'cur') {
+    const curN = cur ? cur.n : null;
+    const c = w.locs.find(l => l.n === curN);
+    if (c) return c;
+  }
+  return w.locs.slice().sort(byNT)[0] || { n: 0, t: null };
+}
+function today() {
+  const d = new Date();
+  return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+}
+function lessonTitle(n) {
+  const c = byN[n]; if (!c) return '第' + n + '课';
+  if (isBook(c)) return `${SERIES[SR(c)].tag(n)} · ${c.ko || ''}`;
+  return `第${n}课 · ${c.ko || ''}${c.zh ? '（' + c.zh + '）' : ''}`;
+}
+
+let nbScope = 'cur', nbQ = '', selText = '', selTime = null;
+let nbSort = ['a', 'new', 'old'].includes(localStorage.ttmikSort) ? localStorage.ttmikSort : 'a';   // a=按课文顺序 · new=最新记的 · old=最早记的
+const SORT_LABEL = { a: '\u21c5 按课文', new: '\u2193 最新', old: '\u2191 最早' };
+const SORT_NAME = { a: '按课文顺序', new: '最新记的在前', old: '最早记的在前' };
+const nbListEl = $('nbList'), pill = $('selpill');
+
+function setNb(on) {
+  document.body.classList.toggle('nb-on', on);
+  localStorage.ttmikNb = on ? '1' : '0';
+  setTimeout(() => centerOn(activeIdx, false), 290);
+}
+
+function gramLine(text) {
+  const g = gramNotes(text).list;
+  if (!g.length) return '';
+  return '<div class="g"><b>搭配</b> ' + g.map(x => esc(x.form) + ' ' + esc(x.note)).join(' · ') + '</div>';
+}
+
+let gBusy = false;
+async function autoFillAll() {
+  if (gBusy) { toast('正在翻，等一下'); return; }
+  const all = wbAll();
+  let local = 0;
+  const need = [];
+  all.forEach(w => {
+    if (w.m) return;
+    const l = localGloss(w.w);
+    if (l && l.indexOf(' · ') < 0) { w.m = l; w.ga = 1; local++; }
+    else if (l) { w.m = l; w.ga = 2; local++; need.push(w); }   // 硬拼的先填，再去网上找更好的
+    else need.push(w);
+  });
+  if (local) wbSave(all);
+  renderNb();
+  if (!need.length) { toast(local ? `本地词表填了 ${local} 条` : '没有空着的释义'); return; }
+
+  gBusy = true;
+  const btn = $('nbAuto');
+  btn.disabled = true;
+  const got = {};
+  let ok = 0, fail = 0;
+  for (let i = 0; i < need.length; i++) {
+    const w = need[i];
+    try {
+      const t = await onlineGloss(w.w);
+      if (t) { got[w.id] = t; ok++; } else fail++;
+    } catch (e) { fail++; }
+    if (i % 3 === 0) btn.textContent = `翻译中 ${i + 1}/${need.length}`;
+    await new Promise(r => setTimeout(r, 320));
+  }
+  btn.disabled = false;
+  btn.textContent = '自动释义';
+  if (ok) {
+    const now = wbAll();
+    now.forEach(w => { if (got[w.id] && (!w.m || w.ga === 2)) { w.m = got[w.id]; w.ga = 1; } });
+    wbSave(now);
+  }
+  gBusy = false;
+  renderNb();
+  toast(`自动释义：本地 ${local} 条 · 联网 ${ok} 条` + (fail ? ` · ${fail} 条没翻出来` : ''));
+}
+
+function renderNb(o) {
+  const reset = !!(o && o.top);
+  const keepTop = nbListEl.scrollTop;
+  const all = wbAll();
+  const curN = cur ? cur.n : null;
+  let rows = all.filter(w => nbScope === 'cur' ? w.locs.some(l => l.n === curN) : true);
+  const q = nbQ.trim().toLowerCase();
+  if (q) rows = rows.filter(w => (w.w + ' ' + (w.m || '')).toLowerCase().includes(q)
+    || w.locs.some(l => String(l.n) === q));
+  const sorter = nbSort === 'new' ? (a, b) => b.ts - a.ts
+    : nbSort === 'old' ? (a, b) => a.ts - b.ts
+      : (a, b) => byNT(locOf(a, nbScope), locOf(b, nbScope));
+  rows = rows.slice().sort(sorter);
+  $('nbSort').textContent = SORT_LABEL[nbSort];
+  const tag = nbScope === 'cur' ? '本课' : '全部';
+  $('nbMd').textContent = tag + ' MD';
+  $('nbCsv').textContent = tag + ' CSV';
+  $('nbCopy').textContent = '复制' + tag;
+  const curWords = all.filter(w => w.locs.some(l => l.n === curN)).length;
+  $('nbCount').textContent = `本课 ${curWords} · 全部 ${all.length}`;
+  $('nbBadge').textContent = all.length;
+  stats();
+  if (!rows.length) {
+    nbListEl.innerHTML = `<div class="nb-empty">${q ? '没找到匹配的词。'
+      : nbScope === 'cur' ? '这一课还没记单词。<br>选中字幕里的词，点浮出来的「＋ 记单词」。<br><br>也可以双击一个词。'
+        : '单词本还是空的。'}</div>`;
+    nbListEl.scrollTop = 0;
+    return;
+  }
+  nbListEl.innerHTML = rows.map(w => `<div class="wd" data-id="${w.id}">
+      <div class="hd"><span class="w">${esc(w.w)}</span><button class="x" title="删除">×</button></div>
+      <input class="m${w.ga ? ' auto' : ''}" placeholder="释义（可留空）" value="${esc(w.m || '')}">
+      ${gramLine(w.w)}
+      ${w.locs.slice().sort(byNT).map(l => `<div class="meta"><a class="jump" data-n="${l.n}" data-t="${l.t == null ? '' : l.t}">${esc(lessonTitle(l.n))}${l.t != null ? ' · ' + fmt(l.t) : ''}</a></div>`).join('')}
+    </div>`).join('');
+  // 重建后把滚动位置放回去：加词 / 改释义 / 删词都不该把人拽回顶部
+  nbListEl.scrollTop = reset ? 0 : keepTop;
+}
+
+const clip = s => s.length > 14 ? s.slice(0, 14) + '…' : s;
+function flashCard(id) {
+  const el = nbListEl.querySelector(`.wd[data-id="${id}"]`);
+  if (!el) return;
+  el.scrollIntoView({ block: 'nearest' });
+  el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+  setTimeout(() => el.classList.remove('hit'), 1400);
+}
+
+function addWord(text, t) {
+  text = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!text) return;
+  const n = cur ? cur.n : null;
+  const tt = t == null ? null : Math.round(t * 100) / 100;
+  const all = wbAll();
+  const hit = all.find(w => w.w === text);
+  if (hit) {
+    const dup = hit.locs.some(l => l.n === n && (tt == null || l.t == null || Math.abs(l.t - tt) < 2));
+    if (dup) { toast('「' + clip(text) + '」这个词已经记过了'); flashCard(hit.id); return; }
+    hit.locs.push({ n, t: tt });
+    wbSave(all);
+    if (!document.body.classList.contains('nb-on')) setNb(true);
+    renderNb();
+    toast('「' + clip(text) + '」记过了 → 加一条位置：第' + n + '课' + (tt != null ? ' ' + fmt(tt) : ''));
+    flashCard(hit.id);
+    return;
+  }
+  const g0 = localGloss(text);
+  const weak = !!g0 && g0.indexOf(' · ') >= 0;   // 词表逐词拼出来的，先当临时
+  const nid = 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  all.push({
+    id: nid, w: text, m: g0, ga: g0 ? (weak ? 2 : 1) : 0, locs: [{ n, t: tt }], ts: Date.now()
+  });
+  wbSave(all);
+  if (!document.body.classList.contains('nb-on')) setNb(true);
+  renderNb();                       // 保留滚动位置，不再跳回第一条
+  renderList();
+  toast('记下了：' + clip(text));
+  if (!g0 || weak) glossOne(nid, text, weak);   // 本地没有 / 只是硬拼 → 后台补一条，只改这张卡
+  requestAnimationFrame(() => {
+    if (!document.body.classList.contains('nb-on')) return;
+    // 绝不滚动列表：卡片本来就在视野里才闪一下，否则只靠 toast 告知
+    const el = nbListEl.querySelector(`.wd[data-id="${nid}"]`);
+    if (!el) return;
+    const r = el.getBoundingClientRect(), box = nbListEl.getBoundingClientRect();
+    if (r.top < box.bottom - 6 && r.bottom > box.top + 6) {
+      el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+      setTimeout(() => el.classList.remove('hit'), 1400);
+    }
+  });
+}
+
+/* ---------- 单条释义：加词后就地补，不动列表 ---------- */
+function fillCard(w, force) {
+  const el = nbListEl.querySelector(`.wd[data-id="${w.id}"]`);
+  if (!el) return;
+  const inp = el.querySelector('input.m');
+  if (inp && (force || !inp.value)) { inp.value = w.m; inp.classList.add('auto'); }
+  if (inp) inp.placeholder = '释义（可留空）';
+}
+
+let glossQ = Promise.resolve();
+function glossOne(id, text, replace) {
+  const before = nbListEl.querySelector(`.wd[data-id="${id}"] input.m`);
+  if (before && !before.value) before.placeholder = '正在查释义…';
+  glossQ = glossQ.then(async () => {
+    await new Promise(r => setTimeout(r, 280));   // 连着加几个词时别把接口挤爆
+    let t = '';
+    try { t = await onlineGloss(text); } catch (e) { }
+    const all = wbAll(), w = all.find(x => x.id === id);
+    if (!w) return;
+    // ga=2 表示「逐词硬拼的临时释义」，在线翻到更好的就替换
+    if (t && (!w.m || (replace && w.ga === 2))) { w.m = t; w.ga = 1; wbSave(all); fillCard(w, true); }
+    else {
+      const i2 = nbListEl.querySelector(`.wd[data-id="${id}"] input.m`);
+      if (i2 && !i2.value) i2.placeholder = '释义（可留空）';
+    }
+  }).catch(() => { });
+  return glossQ;
+}
+
+function hidePill() { pill.classList.remove('show'); }
+// 选区纯文本：剔掉主持人名字（.who）和词卡序号（.wc-n），一行一句
+function selPlain() {
+  const s = getSelection();
+  if (!s || s.isCollapsed || !s.rangeCount) return '';
+  let box;
+  try {
+    box = document.createElement('div');
+    box.appendChild(s.getRangeAt(0).cloneContents());
+  } catch (e) { return s.toString().trim(); }
+  // 模板里的换行缩进会变成纯空白文本节点，先清掉，否则复制出来全是空行
+  const wk = document.createTreeWalker(box, NodeFilter.SHOW_TEXT), junk = [];
+  while (wk.nextNode()) if (!wk.currentNode.nodeValue.trim()) junk.push(wk.currentNode);
+  junk.forEach(n => n.remove());
+  box.querySelectorAll('.who,.wc-n').forEach(e => e.remove());
+  // 词卡：单词和释义之间补一个空格，例句 / 译文各占一行
+  box.querySelectorAll('.wc-w').forEach(e => { if (e.nextSibling) e.after(' '); });
+  box.querySelectorAll('.wc-e,.wc-z').forEach(e => e.before('\n'));
+  box.querySelectorAll('.line').forEach(e => e.after('\n'));
+  return (box.textContent || '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+function copyText(t) {
+  const fallback = () => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = t;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      document.body.appendChild(ta);
+      ta.select(); ta.setSelectionRange(0, t.length);
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    } catch (e) { return false; }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(t).then(() => true, fallback);
+  }
+  return Promise.resolve(fallback());
+}
+function captureSel() {
+  const s = getSelection();
+  if (!s || s.isCollapsed || !s.rangeCount) return hidePill();
+  const txt = selPlain().replace(/\s+/g, ' ').trim();
+  if (!txt || txt.length > 60) return hidePill();
+  const inStage = n => n && stageEl.contains(n.nodeType === 3 ? n.parentNode : n);
+  if (!inStage(s.anchorNode) || !inStage(s.focusNode)) return hidePill();
+  const host = s.anchorNode.nodeType === 3 ? s.anchorNode.parentNode : s.anchorNode;
+  const lineEl = host.closest ? host.closest('.line') : null;
+  const r = s.getRangeAt(0).getBoundingClientRect();
+  if (!r || (!r.width && !r.height)) return hidePill();
+  selText = txt;
+  selTime = lineEl ? (lines()[+lineEl.dataset.i] || {}).s : null;
+  pill.classList.add('show');
+  const pw = pill.offsetWidth || 96, ph = pill.offsetHeight || 28, gap = 10;
+  // 贴着选区「末尾」的那一行放：优先右侧，其次左侧，都没地方就贴舞台右内边
+  const rects = [...s.getRangeAt(0).getClientRects()].filter(q => q.width > 2 || q.height > 2);
+  const last = rects.length ? rects[rects.length - 1] : r;
+  const stageR = stageEl.getBoundingClientRect();
+  let x, y = last.top + last.height / 2 - ph / 2;
+  if (innerWidth - last.right >= pw + gap + 8) x = last.right + gap;
+  else if (last.left - stageR.left >= pw + gap + 8) x = last.left - pw - gap;
+  else x = Math.min(stageR.right, innerWidth) - pw - 8;
+  x = Math.max(8, Math.min(x, innerWidth - pw - 8));
+  // 别掉进底部的播放控件里
+  y = Math.max(stageR.top + 8, Math.min(y, stageR.bottom - ph - 8));
+  y = Math.max(8, Math.min(y, innerHeight - ph - 10));
+  pill.style.left = Math.round(x) + 'px';
+  pill.style.top = Math.round(y) + 'px';
+}
+
+pill.addEventListener('mousedown', e => e.preventDefault());
+$('selAdd').onclick = () => {
+  addWord(selText, selTime);
+  hidePill();
+  const s = getSelection(); if (s) s.removeAllRanges();
+};
+$('selCopy').onclick = () => {
+  const t = selPlain() || selText;
+  if (!t) return hidePill();
+  copyText(t).then(ok => {
+    toast(ok ? '已复制' + (t.includes('\n') ? '（' + t.split('\n').length + ' 行）' : '') : '复制失败，请手动 Ctrl+C');
+  });
+};
+document.addEventListener('mouseup', e => {
+  if (e.target.closest && (e.target.closest('#selpill') || e.target.closest('.nb'))) return;
+  setTimeout(captureSel, 10);
+});
+document.addEventListener('touchend', () => setTimeout(captureSel, 280));
+// Ctrl+C / 右键复制：只要选的是正文，就把主持人名字剔掉再进剪贴板
+document.addEventListener('copy', e => {
+  const s = getSelection();
+  if (!e.clipboardData || !s || s.isCollapsed || !s.rangeCount) return;
+  const node = s.getRangeAt(0).commonAncestorContainer;
+  const host = node.nodeType === 3 ? node.parentNode : node;
+  if (!host || !stageEl.contains(host)) return;
+  const t = selPlain();
+  if (!t) return;
+  e.clipboardData.setData('text/plain', t);
+  e.preventDefault();
+});
+document.addEventListener('mousedown', e => { if (!e.target.closest || !e.target.closest('#selpill')) hidePill(); });
+document.addEventListener('scroll', hidePill, true);
+// 选区一建立就给所有行换成实体文字，否则 active 那句的字是透明的，选区框会飘
+document.addEventListener('selectionchange', () => {
+  const s = getSelection();
+  const on = !!(s && !s.isCollapsed && String(s).trim() && s.anchorNode && stageEl.contains(s.anchorNode));
+  document.body.classList.toggle('pick', on);
+});
+
+$('nbBtn').onclick = () => setNb(!document.body.classList.contains('nb-on'));
+$('nbClose').onclick = () => setNb(false);
+$('nbTabs').onclick = e => {
+  const t = e.target.closest('.nt'); if (!t) return;
+  nbScope = t.dataset.s;
+  [...$('nbTabs').children].forEach(x => x.classList.toggle('on', x === t));
+  renderNb({ top: 1 });
+};
+$('nbQ').addEventListener('input', e => { nbQ = e.target.value; renderNb({ top: 1 }); });
+$('nbAuto').onclick = autoFillAll;
+$('nbSort').onclick = () => {
+  nbSort = nbSort === 'a' ? 'new' : nbSort === 'new' ? 'old' : 'a';
+  localStorage.ttmikSort = nbSort;
+  renderNb({ top: 1 });
+  toast('排序：' + SORT_NAME[nbSort]);
+};
+
+nbListEl.addEventListener('input', e => {
+  const inp = e.target.closest('input.m'); if (!inp) return;
+  const id = inp.closest('.wd').dataset.id;
+  const all = wbAll(), w = all.find(x => x.id === id); if (!w) return;
+  w.m = inp.value; if (w.ga) delete w.ga; wbSave(all);
+});
+nbListEl.addEventListener('click', e => {
+  const x = e.target.closest('.x');
+  if (x) {
+    const id = x.closest('.wd').dataset.id;
+    wbDel(id);
+    renderNb(); renderList(); toast('已删除');
+    return;
+  }
+  const j = e.target.closest('.jump');
+  if (j) {
+    const n = +j.dataset.n, t = j.dataset.t === '' ? 0 : +j.dataset.t;
+    const wasPlaying = !audio.paused;
+    load(n, t, wasPlaying);
+  }
+});
+
+/* 导出 */
+// 范围内的词（每个词一次），并按「本课/全部」取用于排序的位置
+function wbWords(scope) {
+  const curN = cur ? cur.n : null;
+  return wbAll().filter(w => scope === 'cur' ? w.locs.some(l => l.n === curN) : true)
+    .sort((a, b) => byNT(locOf(a, scope), locOf(b, scope)));
+}
+// CSV 每个位置一行，方便在 Excel 里按课排序、也方便 Anki 带时间
+function wbLocs(scope) {
+  const curN = cur ? cur.n : null, out = [];
+  wbAll().forEach(w => w.locs.forEach(l => {
+    if (scope === 'cur' && l.n !== curN) return;
+    out.push({ w: w.w, m: w.m || '', n: l.n, t: l.t });
+  }));
+  return out.sort(byNT);
+}
+function mdText(scope) {
+  const words = wbWords(scope);
+  const g = {};
+  words.forEach(w => {
+    const first = locOf(w, scope);
+    (g[first.n] = g[first.n] || []).push(w);
+  });
+  let out = '# TTMIK 单词本\n\n';
+  Object.keys(g).map(Number).sort((a, b) => a - b).forEach(n => {
+    out += `## ${lessonTitle(n)}\n\n`;
+    g[n].forEach(w => {
+      const marks = w.locs.slice().sort(byNT)
+        .map(l => '`' + (scope === 'cur' ? '' : '第' + l.n + '课 ') + fmt(l.t) + '`').join(' · ');
+      out += `- **${w.w}**${w.m ? ' — ' + w.m : ''}${marks ? '　' + marks : ''}\n`;
+    });
+    out += '\n';
+  });
+  return out.trim() + '\n';
+}
+function csvText(scope) {
+  const q = s => '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"';
+  const head = ['课号', '韩语', '释义', '时间'].map(q).join(',');
+  const body = wbLocs(scope).map(r => [r.n, r.w, r.m, r.t != null ? fmt(r.t) : ''].map(q).join(','));
+  return '\ufeff' + [head].concat(body).join('\r\n') + '\r\n';
+}
+function download(name, text, mime) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1200);
+}
+const scopeName = () => nbScope === 'cur'
+  ? (cur ? (SR(cur) === 'ttmik' ? '第' + cur.n + '课' : (cur.k || cur.n)) : '')
+  : '全部';
+$('nbMd').onclick = () => {
+  const rows = wbWords(nbScope);
+  if (!rows.length) return toast('这个范围还没有单词');
+  download(`TTMIK单词本-${scopeName()}-${today()}.md`, mdText(nbScope), 'text/markdown;charset=utf-8');
+  toast('已导出 ' + rows.length + ' 个词');
+};
+$('nbCsv').onclick = () => {
+  const rows = wbLocs(nbScope);
+  if (!rows.length) return toast('这个范围还没有单词');
+  download(`TTMIK单词本-${scopeName()}-${today()}.csv`, csvText(nbScope), 'text/csv;charset=utf-8');
+  toast('已导出 ' + rows.length + ' 行（一词多位置会占多行）');
+};
+$('nbCopy').onclick = async () => {
+  const rows = wbWords(nbScope);
+  if (!rows.length) return toast('这个范围还没有单词');
+  const txt = mdText(nbScope);
+  try { await navigator.clipboard.writeText(txt) }
+  catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  toast('已复制 ' + rows.length + ' 个词');
+};
+
+/* 整本备份 / 读回（不依赖 localStorage 存多久，换浏览器也不怕） */
+$('nbBak').onclick = () => {
+  const all = wbAll();
+  if (!all.length) return toast('单词本还是空的');
+  download(`TTMIK单词本-备份-${today()}.json`, JSON.stringify({ v: 1, at: Date.now(), words: all }, null, 0), 'application/json');
+  toast('已保存备份：' + all.length + ' 个词');
+};
+$('nbRes').onclick = () => $('nbFile').click();
+$('nbFile').onchange = e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    let arr = [];
+    try {
+      const o = JSON.parse(String(fr.result));
+      arr = Array.isArray(o) ? o : (o && Array.isArray(o.words) ? o.words : []);
+    } catch (err) { return toast('这个文件读不出来，不是备份文件'); }
+    const now = wbAll(), have = new Set(now.map(w => w.id));
+    let add = 0;
+    arr.forEach(w => {
+      if (!w || !w.w) return;
+      if (!w.id) w.id = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      if (have.has(w.id)) return;
+      now.push(wbFix(w)); have.add(w.id); add++;
+    });
+    wbSave(now); renderNb(); renderList();
+    toast(add ? `读回 ${add} 个词` : '没有新的词（已经全在单词本里了）');
+  };
+  fr.readAsText(f, 'utf-8');
+  e.target.value = '';
+};
+/* 预览面板走的是 http://127.0.0.1:<随机端口>，端口一变 storage 就是新的空桶 —— 必须提醒 */
+(function () {
+  const ephemeral = location.protocol === 'http:' && /^(127\.0\.0\.1|localhost)$/.test(location.hostname);
+  if (!ephemeral) return;
+  $('nbWarn').hidden = false;
+  $('nbTip').hidden = true;
+})();
+
+window.addEventListener('storage', e => {
+  if (e.key === WBK || e.key === WBB || e.key === WBD) renderNb();
+});
+
+/* ---------- 阅读模式控件 ---------- */
+const BFS_MIN = 13, BFS_MAX = 27;
+let bfs = Math.min(BFS_MAX, Math.max(BFS_MIN, +(localStorage.bookFs || 17)));
+function applyFs() {
+  document.documentElement.style.setProperty('--bfs', bfs + 'px');
+  localStorage.bookFs = bfs;
+}
+applyFs();
+$('bkFsDown').onclick = () => { bfs = Math.max(BFS_MIN, bfs - 1); applyFs(); };
+$('bkFsUp').onclick = () => { bfs = Math.min(BFS_MAX, bfs + 1); applyFs(); };
+$('bkPrev').onclick = () => $('prevL').click();
+$('bkNext').onclick = () => $('nextL').click();
+
+/* ---------- 朗读（系统 TTS） ---------- */
+const SYN = window.speechSynthesis;
+const RATES = [0.8, 1, 1.25];
+let ttsVoice = null, ttsOn = false, ttsGen = 0, ttsRate = +(localStorage.bookRate || 1);
+let voiceList = [], vIdx = 0;   // 0=首选（神经音色），出错就往后退一档
+$('bkRate').textContent = ttsRate + '×';
+
+function pickVoice() {
+  if (!SYN) return;
+  const vs = SYN.getVoices() || [];
+  voiceList = [
+    vs.find(v => /^ko/i.test(v.lang) && /Natural/i.test(v.name)),   // 선히/인준 这类神经音色
+    vs.find(v => /^ko/i.test(v.lang) && /heami/i.test(v.name)),
+    vs.find(v => /^ko/i.test(v.lang)),
+  ].filter(Boolean);
+  ttsVoice = voiceList[Math.min(vIdx, voiceList.length - 1)] || null;
+  $('bkPlay').title = ttsVoice
+    ? '朗读本篇 · ' + ttsVoice.name
+    : '系统里没有韩语语音（Windows 设置 → 时间和语言 → 语言 → 添加韩国语）';
+}
+if (SYN) { pickVoice(); SYN.addEventListener('voiceschanged', pickVoice); }
+
+function ttsMark(i) {
+  listEl.querySelectorAll('.line.rmark').forEach(e => e.classList.remove('rmark'));
+  const el = listEl.querySelector('.line[data-i="' + i + '"]');
+  if (!el) return;
+  el.classList.add('rmark');
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+function ttsStop() {
+  ttsOn = false; ttsGen++;
+  if (SYN) SYN.cancel();
+  listEl.querySelectorAll('.line.rmark').forEach(e => e.classList.remove('rmark'));
+  const b = $('bkPlay');
+  if (b) { b.textContent = '▶ 朗读'; b.classList.remove('on'); }
+}
+function ttsStart(from) {
+  const data = cur && LYR[cur.n];
+  const lines = data && data.lines ? data.lines : [];
+  if (!lines.length) return toast('这篇没有正文');
+  if (!SYN) return toast('这个浏览器不支持朗读');
+  ttsStop();
+  const g = ++ttsGen;
+  ttsOn = true;
+  $('bkPlay').textContent = '■ 停止';
+  $('bkPlay').classList.add('on');
+  if (from == null) {
+    // 从当前视口顶部那一段开始，不用每次从头读
+    const keep = stageEl.getBoundingClientRect().top + 44;
+    from = 0;
+    const els = [...listEl.querySelectorAll('.line')];
+    for (let i = 0; i < els.length; i++) {
+      if (els[i].getBoundingClientRect().bottom > keep) { from = i; break; }
+    }
+  }
+  const step = i => {
+    if (!ttsOn || g !== ttsGen) return;
+    if (i >= lines.length) { ttsStop(); toast('这篇读完了'); return; }
+    const l0 = lines[i];
+    const isTwCard = document.body.classList.contains('tw');
+    const t = String(isTwCard ? [l0.t, l0.e].filter(Boolean).join('. ') : (l0.t || '')).trim();
+    if (!t) return step(i + 1);
+    ttsMark(i);
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = 'ko-KR';
+    if (ttsVoice) u.voice = ttsVoice;
+    u.rate = ttsRate;
+    let moved = false, wd = 0;
+    const next = () => {
+      if (moved) return; moved = true;
+      clearTimeout(wd);
+      setTimeout(() => step(i + 1), 170);
+    };
+    // 兜底：某些环境下 speak 之后 onend 会丢，按字数估时强制推进，别卡在第一段
+    wd = setTimeout(next, Math.max(3000, t.length * 400 / Math.max(.6, ttsRate)));
+    u.onend = next;
+    u.onerror = e => {
+      const w = e && e.error;
+      if (w === 'canceled' || w === 'interrupted') { clearTimeout(wd); return; }
+      // 神经音色可能因联网/权限失败：降一档重读这一句，别默默跳过
+      if (vIdx + 1 < voiceList.length) {
+        clearTimeout(wd);
+        vIdx++; pickVoice();
+        if (ttsVoice) { step(i); return; }
+      }
+      next();
+    };
+    try { SYN.speak(u); } catch (err) { next(); }
+  };
+  step(from);
+}
+$('bkPlay').onclick = () => ttsOn ? ttsStop() : ttsStart();
+$('bkRate').onclick = () => {
+  let k = RATES.indexOf(ttsRate); if (k < 0) k = 1;
+  ttsRate = RATES[(k + 1) % RATES.length];
+  localStorage.bookRate = ttsRate;
+  $('bkRate').textContent = ttsRate + '×';
+  if (ttsOn) ttsStop();
+  toast('朗读语速 ' + ttsRate + '×');
+};
+
+let scrollT = 0;
+stageEl.addEventListener('scroll', () => {
+  if (!document.body.classList.contains('book') || !cur) return;
+  const max = Math.max(1, stageEl.scrollHeight - stageEl.clientHeight);
+  $('bkProg').textContent = Math.round(stageEl.scrollTop / max * 100) + '%';
+  clearTimeout(scrollT);
+  scrollT = setTimeout(() => {
+    const p = LS.pos; p[cur.n] = stageEl.scrollTop; LS.pos = p;
+  }, 400);
+}, { passive: true });
+
+/* ---------- 启动 ---------- */
+{ // 阅读：按数据里实际有的届次生成胶囊
+  const exs = [...new Set(CAT.filter(c => SR(c) === 'tk').map(c => +c.e || 0))].filter(Boolean).sort((a, b) => a - b);
+  $('tkEx').innerHTML = exs.map(e => `<span class="yb" data-e="${e}">${e}届</span>`).join('');
+  if (!exs.includes(tkEx)) tkEx = exs[0] || 0;
+  [...$('tkEx').children].forEach(x => x.classList.toggle('on', +x.dataset.e === tkEx));
+}
+syncSeries();
+renderList(); stats();
+[...$('ysBooks').children].forEach(x => {
+  const has = CAT.some(c => String(c.n).startsWith('y' + x.dataset.b));
+  x.style.display = has ? '' : 'none';
+  x.classList.toggle('on', x.dataset.b === ysBook);
+});
+if (!CAT.some(c => String(c.n).startsWith('y' + ysBook))) {
+  const f = CAT.find(c => SR(c) === 'ys');
+  if (f) { ysBook = String(f.n)[1]; localStorage.ttmikYsBook = ysBook; }
+}
+[...$('twLv').children].forEach(x => {
+  const has = CAT.some(c => SR(c) === 'tw' && (+c.lv || 0) === +x.dataset.l);
+  x.style.display = has ? '' : 'none';
+  x.classList.toggle('on', +x.dataset.l === twLv);
+});
+{ const hasLv = CAT.some(c => SR(c) === 'tw' && (+c.lv || 0) === twLv);
+  if (!hasLv) { const f = CAT.find(c => SR(c) === 'tw'); if (f) { twLv = +f.lv; localStorage.ttmikTwLv = twLv; } } }
+setNb(localStorage.ttmikNb !== '0');
+renderNb();
+(function boot() {
+  const p = new URLSearchParams(location.search);
+  const raw = p.get('n');
+  const at = +p.get('at');
+  let start = (raw && byN[raw]) ? (byN[raw].n) : null;
+  if (!start && LS.last && byN[LS.last] && SR(byN[LS.last]) === series
+    && !(series === 'tw' && (+byN[LS.last].lv || 0) !== (+twLv || 1))) start = byN[LS.last].n;
+  if (!start) {
+    const inLv = c => !(series === 'tw' && (+c.lv || 0) !== (+twLv || 1));
+    start = (CAT.find(c => SR(c) === series && inLv(c) && c.f)
+      || CAT.find(c => SR(c) === series && inLv(c))
+      || CAT.find(c => SR(c) === series) || CAT[0]).n;
+  }
+  load(start, isNaN(at) ? 0 : at, false);
+})();
+tickOn = true; requestAnimationFrame(tick);
+</script>
+</body>
+</html>
