@@ -39,8 +39,6 @@
     cursor:pointer;color:var(--dim);border:1px solid var(--line);background:rgba(255,255,255,.035);transition:.15s}
   .twlv .yb:hover{color:var(--fg)}
   .twlv .yb.on{color:var(--accent);background:rgba(127,209,193,.12);border-color:rgba(127,209,193,.3);font-weight:600}
-  .ghnote{padding:0 14px 9px;font-size:10.5px;line-height:1.5;color:var(--dim);border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:2px}
-  .ghnote b{color:rgba(238,241,246,.78);font-weight:600}
   .yshint{display:none;padding:0 14px 9px;font-size:10.5px;line-height:1.5;color:var(--dim)}
   body.ys .yshint{display:block}
   .twhint{display:none;padding:0 14px 9px;font-size:10.5px;line-height:1.5;color:var(--dim)}
@@ -396,7 +394,7 @@
 <aside class="side" id="side">
   <div class="side-head">
     <div class="logo"><b id="sTitle">TTMIK 이야기</b><span id="cnt"></span></div>
-    <div class="ghnote">线上分享版：<b>不含 mp3</b>（原始音频 2.3 GB 未上传）。想听就点右下角「▶ 朗读」，用系统语音逐句读。</div>
+    
     <div class="series" id="series">
       <div class="sr on" data-s="ttmik">TTMIK</div>
       <div class="sr" data-s="topik1">TOPIK Ⅰ</div>
@@ -525,7 +523,7 @@
     <div class="nb-foot2">
       <button id="nbAuto" title="用本地词表 + 在线翻译，把空着的释义自动填上">自动释义</button>
       <button id="nbBak" title="把单词本存成 JSON 文件（换浏览器、清缓存前先点一下）">备份文件</button>
-      <button id="nbRes" title="从备份文件读回来（会按 id 合并，不会覆盖现有）">读回备份</button>
+      <button id="nbRes" title="读回备份 JSON 或导出的 CSV（按词合并，不覆盖现有）">读回备份</button>
       <input type="file" id="nbFile" accept=".json,application/json" hidden>
     </div>
   </div>
@@ -543,10 +541,9 @@
 <script src="_tw/tw.js"></script>
 <script src="_tk/tk.js"></script>
 <script>
-/* 线上版：mp3 没上传，把音频字段摘掉，避免每课都去请求一个 404 的 mp3 */
+/* 线上版音频是转码后的 m4a（AAC 40k 单声道），按课号命名，体积从 1.88 GB 压到约 600 MB */
 (function () {
-  [window.CATALOG, window.BOOKCAT, window.YSCAT, window.TWCAT, window.TKCAT].forEach(a =>
-    (a || []).forEach(c => { if (c.f) { c.f = ''; } }));
+  (window.CATALOG || []).forEach(c => { if (c.f) c.f = 'audio/' + c.n + '.m4a'; });
 })();
 </script>
 <script>
@@ -770,7 +767,7 @@ function load(n, at = 0, play = false) {
     b.push(`<span class="bdg ${data.src === 'pdf' ? 'ok' : 'warn'}">${data.src === 'pdf' ? 'PDF 原文' : '自动识别字幕'}</span>`);
   }
   if (!data) b.push('<span class="bdg">无字幕</span>');
-  if (!hasAu && !book) b.push('<span class="bdg warn">线上版无音频</span>');
+  if (!hasAu && !book) b.push('<span class="bdg warn">音频未下载</span>');
   if (data && data.dur) b.push(`<span class="bdg">${fmt(data.dur)}</span>`);
   $('badges').innerHTML = b.join('');
 
@@ -1992,26 +1989,91 @@ $('nbBak').onclick = () => {
   toast('已保存备份：' + all.length + ' 个词');
 };
 $('nbRes').onclick = () => $('nbFile').click();
+/* 导出的 CSV 也能直接读回来：课号 / 韩语 / 释义 / 时间(m:ss) */
+function csvCells(txt) {
+  const rows = []; let row = [], fld = '', q = false;
+  for (let i = 0; i < txt.length; i++) {
+    const ch = txt[i];
+    if (q) {
+      if (ch === '"') { if (txt[i + 1] === '"') { fld += '"'; i++; } else q = false; }
+      else fld += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === ',') { row.push(fld); fld = ''; }
+    else if (ch === '\n') { row.push(fld); rows.push(row); row = []; fld = ''; }
+    else if (ch !== '\r') fld += ch;
+  }
+  if (fld !== '' || row.length) { row.push(fld); rows.push(row); }
+  return rows;
+}
+function mmss(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s) return null;
+  const p = s.split(':').map(x => parseInt(x, 10));
+  if (p.some(isNaN)) return null;
+  return p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p.length === 2 ? p[0] * 60 + p[1] : p[0];
+}
+function wbHashId(n, w) {
+  let h = 5381; const t = (n == null ? '' : n) + '|' + w;
+  for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
+  return 'c' + h.toString(36);
+}
 $('nbFile').onchange = e => {
   const f = e.target.files && e.target.files[0];
   if (!f) return;
   const fr = new FileReader();
   fr.onload = () => {
-    let arr = [];
-    try {
-      const o = JSON.parse(String(fr.result));
-      arr = Array.isArray(o) ? o : (o && Array.isArray(o.words) ? o.words : []);
-    } catch (err) { return toast('这个文件读不出来，不是备份文件'); }
-    const now = wbAll(), have = new Set(now.map(w => w.id));
-    let add = 0;
-    arr.forEach(w => {
-      if (!w || !w.w) return;
-      if (!w.id) w.id = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      if (have.has(w.id)) return;
-      now.push(wbFix(w)); have.add(w.id); add++;
-    });
+    const txt = String(fr.result).replace(/^\uFEFF/, '');
+    const now = wbAll();
+    const byId = new Set(now.map(w => w.id));
+    const keyOf = w => {
+      const l = (w.locs && w.locs[0]) || {};
+      return (l.n == null ? '' : l.n) + '|' + w.w;
+    };
+    const byKey = new Map(now.map(w => [keyOf(w), w]));
+    let add = 0, fill = 0;
+
+    if (/^\s*[[{]/.test(txt)) {              // JSON 备份
+      let arr = [];
+      try {
+        const o = JSON.parse(txt);
+        arr = Array.isArray(o) ? o : (o && Array.isArray(o.words) ? o.words : []);
+      } catch (err) { return toast('这个文件读不出来，不是备份文件'); }
+      arr.forEach(w => {
+        if (!w || !w.w) return;
+        if (!w.id) w.id = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        if (byId.has(w.id)) return;
+        now.push(wbFix(w)); byId.add(w.id); add++;
+      });
+    } else {                                  // CSV（导出文件原样喂回来）
+      const rows = csvCells(txt);
+      if (!rows.length) return toast('这个文件是空的');
+      const hdr = rows[0].map(x => x.trim());
+      const ci = {
+        n: Math.max(hdr.indexOf('课号'), 0), w: hdr.indexOf('韩语'),
+        m: hdr.indexOf('释义'), t: hdr.indexOf('时间')
+      };
+      if (ci.w < 0) ci.w = 1;
+      const start = /韩语|课号|word/i.test(rows[0].join('')) ? 1 : 0;
+      for (let i = start; i < rows.length; i++) {
+        const r = rows[i];
+        const w = (r[ci.w] || '').trim();
+        if (!w) continue;
+        const num = parseInt(r[ci.n], 10);
+        const n = isNaN(num) ? null : num;
+        const m = ci.m >= 0 ? (r[ci.m] || '').trim() : '';
+        const t = ci.t >= 0 ? mmss(r[ci.t]) : null;
+        const hit = byKey.get((n == null ? '' : n) + '|' + w);
+        if (hit) { if (!hit.m && m) { hit.m = m; fill++; } continue; }
+        const item = wbFix({ id: wbHashId(n, w), w: w, m: m,
+          locs: n == null ? [] : [{ n: n, t: t }], ts: Date.now() });
+        now.push(item); byKey.set((n == null ? '' : n) + '|' + w, item);
+        byId.add(item.id); add++;
+      }
+    }
     wbSave(now); renderNb(); renderList();
-    toast(add ? `读回 ${add} 个词` : '没有新的词（已经全在单词本里了）');
+    if (!add && !fill) return toast('没有新的词（已经全在单词本里了）');
+    toast((add ? '读回 ' + add + ' 个词' : '没有新词')
+      + (fill ? '，补全 ' + fill + ' 条释义' : ''));
   };
   fr.readAsText(f, 'utf-8');
   e.target.value = '';
