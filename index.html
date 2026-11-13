@@ -325,6 +325,60 @@
     box-shadow:inset 3px 0 0 rgba(127,209,193,.8)}
   .reader-bar button.on{background:rgba(127,209,193,.16);
     box-shadow:inset 0 0 0 1px rgba(127,209,193,.45)}
+
+  /* ---------- 视频收藏夹：自己贴链接 ---------- */
+  .vhbar{display:none;align-items:center;gap:8px;margin-top:9px}
+  body.vh .vhbar{display:flex}
+  .vhbar #vhAdd{flex:1 1 auto;font-size:11.5px;padding:6px 11px;border-radius:8px;
+    border-style:dashed;color:rgba(238,241,246,.7)}
+  .vhbar #vhAdd:hover{color:var(--accent);border-color:rgba(127,209,193,.45);
+    background:rgba(127,209,193,.07)}
+  .vhbar .vp{margin-left:auto;font-size:11px;color:var(--dim);cursor:pointer;
+    font-variant-numeric:tabular-nums;letter-spacing:.02em;white-space:nowrap}
+  .vhbar .vp:hover{color:var(--fg)}
+  .vhbar .vp b{color:var(--warn);font-weight:600}
+  .vhhint{display:none;padding:7px 0 0;font-size:10.5px;line-height:1.55;color:var(--dim)}
+  body.vh .vhhint{display:block}
+  /* 弹层 */
+  .vhbox{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+    padding:20px;background:rgba(6,8,12,.56);backdrop-filter:blur(2px)}
+  .vhbox.on{display:flex}
+  .vhcard{width:min(560px,100%);background:var(--panel);border:1px solid rgba(255,255,255,.11);
+    border-radius:15px;padding:17px 18px 14px;box-shadow:0 30px 80px rgba(0,0,0,.62)}
+  .vhcard h3{margin:0 0 4px;font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+  .vhcard .sub{font-size:11.5px;line-height:1.65;color:var(--dim);margin-bottom:11px}
+  .vhcard .sub code{font-size:11px;padding:1px 5px;border-radius:5px;
+    background:rgba(255,255,255,.07);color:rgba(238,241,246,.8)}
+  .vhcard textarea{width:100%;height:124px;resize:vertical;border-radius:10px;padding:10px 11px;
+    font:inherit;font-size:12.5px;line-height:1.8;color:var(--fg);outline:none;
+    background:rgba(255,255,255,.045);border:1px solid var(--line)}
+  .vhcard textarea:focus{border-color:rgba(127,209,193,.45);background:rgba(255,255,255,.06)}
+  .vhcard textarea::placeholder{color:rgba(238,241,246,.26)}
+  .vherr{display:none;font-size:11.5px;line-height:1.7;color:var(--warn);margin-top:8px}
+  .vherr.on{display:block}
+  .vhact{display:flex;align-items:center;gap:8px;margin-top:12px}
+  .vhact .spacer{flex:1}
+  .vhact button{font-size:12.5px;padding:7px 13px;border-radius:9px}
+  .vhact #vhOk{background:rgba(127,209,193,.17);color:var(--accent);
+    border-color:rgba(127,209,193,.42);font-weight:600}
+  .vhact #vhOk:hover{background:rgba(127,209,193,.27)}
+  .vhmsg{min-height:16px;margin-top:9px;font-size:11.5px;line-height:1.6;color:var(--accent)}
+  /* 待提取条目：嵌网页播放器 */
+  .list.pend-list{position:static;transform:none!important;transition:none}
+  .stage.pend-stage{overflow-y:auto;overflow-x:hidden;mask-image:none;-webkit-mask-image:none}
+  .vidwrap{position:relative;width:100%;max-width:840px;margin:4px auto 15px;aspect-ratio:16/9;
+    background:#000;border-radius:11px;overflow:hidden;border:1px solid rgba(255,255,255,.09)}
+  .vidwrap iframe{display:block;width:100%;height:100%;border:0}
+  .vidinfo{max-width:840px;margin:0 auto;padding:0 2px 64px;
+    font-size:12.5px;line-height:1.85;color:var(--dim)}
+  .vidinfo b{color:var(--fg);font-weight:600}
+  .vidinfo .kv{display:inline-block;min-width:3.2em;color:rgba(238,241,246,.35);font-size:11px}
+  .vidinfo .u{color:rgba(238,241,246,.72);word-break:break-all}
+  .vidinfo .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .vidinfo a,.vidinfo button{font-size:12px;padding:6px 11px;border-radius:8px;color:var(--fg);
+    background:rgba(255,255,255,.06);border:1px solid var(--line);
+    text-decoration:none;cursor:pointer}
+  .vidinfo a:hover,.vidinfo button:hover{background:rgba(255,255,255,.11)}
   .bk-quote{margin:4px 34px 26px;padding:14px 0 14px 16px;border-left:2px solid rgba(127,209,193,.45);
     font-size:calc(var(--bfs,17px) - 1px);line-height:1.9;color:rgba(238,241,246,.6);font-style:italic}
   body.book #stage::-webkit-scrollbar{width:9px}
@@ -405,6 +459,12 @@
       <div class="sr" data-s="book">韩语书</div>
       <div class="sr" data-s="vh" title="视频收藏夹">视频</div>
     </div>
+    <div class="vhbar" id="vhBar">
+      <button id="vhAdd" title="粘贴 B站 / YouTube 链接">＋ 粘贴视频链接</button>
+      <span class="vp" id="vhPendNum"></span>
+    </div>
+    <div class="vhhint">贴进来的先存在这台设备上，列表里标「待提取」。<br>
+      把「复制待提取」的内容发我，音频和字幕我后台抓。</div>
     <div class="ysbooks" id="ysBooks">
       <span class="yb on" data-b="2">第2册</span>
       <span class="yb" data-b="3">第3册</span>
@@ -437,6 +497,25 @@
   <div class="rows" id="rows"></div>
   <div class="side-foot" id="foot"></div>
 </aside>
+
+<div class="vhbox" id="vhBox">
+  <div class="vhcard">
+    <h3>加入视频</h3>
+    <div class="sub">一行一个链接，想加备注就用竖线隔开：<br>
+      <code>https://www.bilibili.com/video/BV1xx411c7mD | 韩语 vlog 第 3 集</code><br>
+      手机 App 里「分享 → 复制链接」的整段文字也能直接贴，前面的标题会当成备注。</div>
+    <textarea id="vhTa" spellcheck="false" placeholder="https://www.youtube.com/watch?v=xxxxxxxxxxx
+https://www.bilibili.com/video/BV1xxxxxxxxx | 中级听力 2"></textarea>
+    <div class="vherr" id="vhErr"></div>
+    <div class="vhact">
+      <button id="vhOk">加入</button>
+      <button id="vhCopyAll" title="复制还没提取的链接，发给我就能抓音频和字幕">复制待提取</button>
+      <div class="spacer"></div>
+      <button id="vhClose">关掉</button>
+    </div>
+    <div class="vhmsg" id="vhMsg"></div>
+  </div>
+</div>
 
 <main class="main">
   <div class="top">
@@ -564,6 +643,55 @@ const SERIES = {
   vh:     { title: '视频收藏夹', tag: n => { const b = byN[n]; return b ? '视频 ' + b.k : String(n); }, unit: '条' }
 };
 const SR = c => c.s || 'ttmik';
+
+/* ---------- 视频收藏夹：自己贴链接 ----------
+   前端只做「认链接 + 挂条目 + 嵌播放器」，音频和字幕仍在后台抓：
+   抓完 vh.js 里就有了同 src_id 的正式条目，这里的临时条目自动退场。 */
+const VHK = 'ttmikVhUser';
+const vhAll = () => { try { return JSON.parse(localStorage[VHK] || '[]') } catch (e) { return [] } };
+const vhSave = a => { try { localStorage[VHK] = JSON.stringify(a) } catch (e) { } };
+function vhParse(u) {
+  u = String(u || '').trim();
+  let m;
+  if ((m = u.match(/(?:youtube\.com\/(?:[^ ]*[?&]v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/)))
+    return { plat: 'yt', id: m[1], embed: 'https://www.youtube.com/embed/' + m[1] + '?rel=0' };
+  if ((m = u.match(/(BV[0-9A-Za-z]{10})/)))
+    return { plat: 'bili', id: m[1], embed: 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&page=1&high_quality=1&danmaku=0&autoplay=0' };
+  if ((m = u.match(/av(\d{6,})/i)))
+    return { plat: 'bili', id: 'av' + m[1], embed: 'https://player.bilibili.com/player.html?aid=' + m[1] + '&page=1&danmaku=0&autoplay=0' };
+  if ((m = u.match(/b23\.tv\/([\w]+)/)))
+    return { plat: 'b23', id: 'b23-' + m[1], embed: '' };   // 短链要后台解析才知真身
+  return null;
+}
+const vhIds = () => new Set(CAT.filter(c => SR(c) === 'vh' && c.src_id && !c.pend).map(c => c.src_id));
+const vhPendList = () => { const ids = vhIds(); return vhAll().filter(u => !ids.has(u.id)) };
+function vhPendCount() {
+  const n = vhPendList().length;
+  const el = document.getElementById('vhPendNum');
+  if (el) el.innerHTML = n ? `<b>${n}</b> 条待提取` : (vhAll().length ? '都已提取' : '');
+  return n;
+}
+function vhUnmount() {
+  for (let i = CAT.length - 1; i >= 0; i--) {
+    if (String(CAT[i].n).indexOf('vh-u-') === 0) { delete byN[CAT[i].n]; CAT.splice(i, 1); }
+  }
+}
+function vhMount() {
+  const ids = vhIds();
+  let k = CAT.filter(c => SR(c) === 'vh').length;
+  vhAll().forEach(u => {
+    if (ids.has(u.id)) return;
+    const c = {
+      n: 'vh-u-' + u.id, s: 'vh', k: ++k,
+      ko: u.note || ((u.plat === 'yt' ? 'YouTube ' : u.plat === 'bili' ? 'B站 ' : '短链 ') + u.id),
+      zh: '待提取 · ' + String(u.url || '').replace(/^https?:\/\//, '').slice(0, 44),
+      pend: 1, src_id: u.id, plat: u.plat, url: u.url, embed: u.embed || '', dur: 0
+    };
+    CAT.push(c); byN[c.n] = c;
+  });
+  vhPendCount();
+}
+vhMount();
 let series = SERIES[localStorage.ttmikSeries] ? localStorage.ttmikSeries : 'ttmik';
 const LVN = { 1: '初级', 2: '中级', 3: '高级' };
 let twLv = +localStorage.ttmikTwLv || 1;
@@ -599,6 +727,7 @@ const isBook = c => !!c && (SR(c) === 'book' || SR(c) === 'ys' || SR(c) === 'tw'
 const isBookSeries = s => s === 'book' || s === 'ys' || s === 'tw' || s === 'tk';
 function statusOf(c) {
   if (isBook(c)) return { hasLy: true, hasAu: true };
+  if (c.pend) return { hasLy: false, hasAu: true };   // 能嵌原站看，但字幕还没转写
   const hasLy = !!(LYR[c.n] && LYR[c.n].lines && LYR[c.n].lines.length);
   const hasAu = !!c.f;
   return { hasLy, hasAu };
@@ -710,10 +839,52 @@ function resumeAt(n) {
   if (dur > 5 && p >= dur - 2) return 0;
   return p;
 }
+/* 还没提取的条目：直接把原站播放器嵌进来，音频/字幕等后台补 */
+function loadPend(c) {
+  if (SR(c) !== series) { series = SR(c); syncSeries(); renderList(); }
+  LS.last = c.n;
+  const rowEl = rowsEl.querySelector(`.row[data-n="${c.n}"]`);
+  rowsEl.querySelectorAll('.row.on').forEach(e => e.classList.remove('on'));
+  if (rowEl) { rowEl.classList.add('on'); requestAnimationFrame(() => rowEl.scrollIntoView({ block: 'center' })); }
+  document.body.classList.remove('done', 'book', 'tw', 'tk');
+  if (freeOn) exitFree();
+  if (SYN) ttsStop();
+  $('idx').textContent = '视频 ' + c.k;
+  $('ttl').innerHTML = `${esc(c.ko)} <em>待提取音频 · 字幕</em>`;
+  const plat = c.plat === 'yt' ? 'YouTube' : c.plat === 'bili' ? 'B站' : 'b23.tv';
+  $('badges').innerHTML = '<span class="bdg warn">待提取</span>'
+    + `<span class="bdg">${plat}</span>`
+    + (c.embed ? '' : '<span class="bdg warn">短链 · 需解析</span>');
+  listEl.innerHTML = (c.embed
+    ? `<div class="vidwrap"><iframe src="${esc(c.embed)}" title="${esc(c.ko)}" loading="lazy"
+         allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`
+    : '')
+    + `<div class="vidinfo">
+      ${c.embed ? '<div style="color:rgba(238,241,246,.42);font-size:11.5px;margin-bottom:8px">上面是原站播放器。一直黑屏多半是作者关了外链播放，或这台机器连不上那家，点下面「原页面打开」。</div>' : ''}
+      <div><span class="kv">链接</span><span class="u">${esc(c.url)}</span></div>
+      <div style="margin-top:7px">这条排进队列了，音频和字幕还没下来。把链接发我（或点下面「复制链接」），
+        后台跑完就变成能点句、能循环的正式条目${c.embed ? '；在那之前可以先在上面直接看' : '。'}</div>
+      <div class="row">
+        <a href="${esc(c.url)}" target="_blank" rel="noopener">原页面打开 ↗</a>
+        <button data-vhcopy="${esc(c.url)}">复制链接</button>
+        <button data-vhdel="${esc(c.n)}">从收藏夹删掉</button>
+      </div>
+    </div>`;
+  txts = []; emptyEl.classList.remove('show'); activeIdx = -1;
+  stageEl.classList.add('pend-stage'); listEl.classList.add('pend-list');
+  audio.pause(); audio.removeAttribute('src'); audio.load();
+  $('play').disabled = true;
+  $('tcur').textContent = '0:00'; $('tdur').textContent = '--:--';
+  stageEl.scrollTop = 0;
+  renderNb({ top: 1 });
+}
 function load(n, at = 0, play = false) {
   const c = byN[n];
   if (!c) return;
   cur = c;
+  if (c.pend) return loadPend(c);
+  stageEl.classList.remove('pend-stage');
+  listEl.classList.remove('pend-list');
   if (SR(c) !== series) { series = SR(c); syncSeries(); renderList(); }
   // 搜索命中别的级别：跟着切过去，不然列表和内容对不上
   if (SR(c) === 'tw' && (+c.lv || 0) !== (+twLv || 1)) {
@@ -1071,7 +1242,7 @@ function nextLesson(n, dir) {
     && !(SR(c0) === 'tw' && (+c.lv || 0) !== (+twLv || 1)));
   const i = pool.findIndex(c => c.n === n);
   const needAu = !isBook(c0);   // 书没有音频，不能按 f 过滤，否则永远跳不动
-  for (let k = i + dir; k >= 0 && k < pool.length; k += dir) if (!needAu || pool[k].f) return pool[k].n;
+  for (let k = i + dir; k >= 0 && k < pool.length; k += dir) if (!needAu || pool[k].f || pool[k].pend) return pool[k].n;
   return null;
 }
 
@@ -1081,6 +1252,7 @@ function syncSeries() {
   document.body.classList.toggle('ys', series === 'ys');
   document.body.classList.toggle('tw', series === 'tw');
   document.body.classList.toggle('tk', series === 'tk');
+  document.body.classList.toggle('vh', series === 'vh');
   $('sTitle').textContent = SERIES[series].title;
   document.title = SERIES[series].title + ' · 字幕播放器';
   localStorage.ttmikSeries = series;
@@ -1130,7 +1302,89 @@ $('series').addEventListener('click', e => {
 $('prevL').onclick = () => { const n = nextLesson(cur && cur.n, -1); if (n) load(n, 0, true); };
 $('nextL').onclick = () => { const n = nextLesson(cur && cur.n, 1); if (n) load(n, 0, true); };
 
+/* ---------- 视频收藏夹：贴链接 ---------- */
+function vhOpen(on) {
+  const box = $('vhBox');
+  box.classList.toggle('on', on !== false);
+  if (on !== false) {
+    $('vhMsg').textContent = '';
+    $('vhErr').classList.remove('on');
+    setTimeout(() => $('vhTa').focus(), 40);
+  }
+}
+function vhDel(n) {
+  const c = byN[n]; if (!c) return;
+  vhSave(vhAll().filter(u => u.id !== c.src_id));
+  const wasCur = cur && cur.n === n;
+  vhUnmount(); vhMount();
+  renderList(); stats();
+  if (wasCur) {
+    cur = null; activeIdx = -1; txts = [];
+    $('idx').textContent = '—';
+    $('ttl').innerHTML = '已从收藏夹删掉 <em>这条只在本地存过，链接一并移除了</em>';
+    $('badges').innerHTML = '';
+    listEl.innerHTML = '<div class="vidinfo">点左边列表里的其他条目继续。</div>';
+  }
+}
+$('vhAdd').onclick = () => vhOpen(true);
+$('vhPendNum').onclick = () => vhOpen(true);
+$('vhClose').onclick = () => vhOpen(false);
+$('vhBox').onclick = e => { if (e.target === $('vhBox')) vhOpen(false); };
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('vhBox').classList.contains('on')) vhOpen(false);
+});
+$('vhOk').onclick = () => {
+  const raw = $('vhTa').value.trim();
+  if (!raw) { $('vhMsg').textContent = '先粘一个链接进来'; return; }
+  const ids = vhIds(), list = vhAll(), bad = [];
+  let ok = 0, dup = 0, firstNew = '';
+  raw.split(/\r?\n/).forEach(line => {
+    const hit = line.match(/https?:\/\/[^\s|]+/);
+    const url = hit ? hit[0] : '';
+    let note = line.split('|').slice(1).join('|').trim();
+    if (!url) { if (line.trim()) bad.push(line.trim()); return; }
+    if (!note) note = line.replace(url, '').replace(/[【】\[\]<>「」]/g, ' ').replace(/\s+/g, ' ').trim();
+    const p = vhParse(url);
+    if (!p) { bad.push(url); return; }
+    if (ids.has(p.id) || list.some(x => x.id === p.id)) { dup++; return; }
+    list.push({ id: p.id, plat: p.plat, embed: p.embed, url, note, t: Date.now() });
+    if (!firstNew) firstNew = 'vh-u-' + p.id;
+    ok++;
+  });
+  vhSave(list);
+  vhUnmount(); vhMount();
+  if (series !== 'vh') { series = 'vh'; syncSeries(); }
+  renderList(); stats();
+  const msg = [];
+  if (ok) msg.push(`加入 ${ok} 条`);
+  if (dup) msg.push(`${dup} 条已经在收藏夹里`);
+  $('vhMsg').textContent = msg.join(' · ') || '一条都没加进去';
+  if (bad.length) {
+    $('vhErr').classList.add('on');
+    $('vhErr').innerHTML = '这几条认不出来，贴浏览器地址栏里的完整链接：<br>' + bad.map(esc).join('<br>');
+  } else $('vhErr').classList.remove('on');
+  if (ok) {
+    $('vhTa').value = '';
+    if (firstNew && byN[firstNew]) { vhOpen(false); load(firstNew); }
+  }
+};
+$('vhCopyAll').onclick = () => {
+  const pend = vhPendList();
+  if (!pend.length) { $('vhMsg').textContent = '没有待提取的链接'; return; }
+  copyText(pend.map(u => u.url + (u.note ? ' | ' + u.note : '')).join('\n'));
+  $('vhMsg').textContent = `已复制 ${pend.length} 条，粘给我就能抓`;
+};
+
 listEl.onclick = e => {
+  const act = e.target.closest('[data-vhcopy],[data-vhdel]');
+  if (act) {
+    if (act.dataset.vhcopy) {
+      copyText(act.dataset.vhcopy);
+      act.textContent = '已复制';
+      setTimeout(() => { act.textContent = '复制链接' }, 1200);
+    } else if (act.dataset.vhdel) vhDel(act.dataset.vhdel);
+    return;
+  }
   const el = e.target.closest('.line'); if (!el) return;
   // 刚拖选完就松手时也会冒出一个 click，别把它当成「点这句跳过去」
   const s = getSelection();
@@ -1184,6 +1438,7 @@ rowsEl.onclick = e => {
   const r = e.target.closest('.row'); if (!r) return;
   const c = byN[r.dataset.n];
   if (!c) return;
+  if (c.pend) { load(c.n, 0, false); if (window.innerWidth <= 900) document.body.classList.remove('open'); return; }
   if (!c.f && !isBook(c)) { toast(`${c.k || c.n} 的音频还没下载`); return; }
   load(c.n, 0, !isBook(c));
   if (window.innerWidth <= 900) document.body.classList.remove('open');
@@ -1216,7 +1471,7 @@ $('tabs').addEventListener('click', e => {
 /* 键盘 */
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'BUTTON') e.target.blur();
-  if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') { if (e.key === 'Escape') e.target.blur(); return; }
   const L = lines();
   if (document.body.classList.contains('book')) {
     switch (e.key) {
