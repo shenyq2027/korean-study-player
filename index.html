@@ -403,6 +403,7 @@
       <div class="sr" data-s="tw">词汇</div>
       <div class="sr" data-s="tk">阅读</div>
       <div class="sr" data-s="book">韩语书</div>
+      <div class="sr" data-s="vh" title="视频收藏夹">视频</div>
     </div>
     <div class="ysbooks" id="ysBooks">
       <span class="yb on" data-b="2">第2册</span>
@@ -540,6 +541,7 @@
 <script src="_ys/ys.js"></script>
 <script src="_tw/tw.js"></script>
 <script src="_tk/tk.js"></script>
+<script src="_vh/vh.js"></script>
 <script>
 /* 线上版音频是转码后的 m4a（AAC 40k 单声道），按课号命名，体积从 1.88 GB 压到约 600 MB */
 (function () {
@@ -547,8 +549,8 @@
 })();
 </script>
 <script>
-const CAT = (window.CATALOG || []).concat(window.BOOKCAT || []).concat(window.YSCAT || []).concat(window.TWCAT || []).concat(window.TKCAT || []);
-const LYR = Object.assign({}, window.LYRICS || {}, window.BOOKLYR || {}, window.YSLYR || {}, window.TWLYR || {}, window.TKLYR || {});
+const CAT = (window.CATALOG || []).concat(window.BOOKCAT || []).concat(window.YSCAT || []).concat(window.TWCAT || []).concat(window.TKCAT || []).concat(window.VHCAT || []);
+const LYR = Object.assign({}, window.LYRICS || {}, window.BOOKLYR || {}, window.YSLYR || {}, window.TWLYR || {}, window.TKLYR || {}, window.VHLYR || {});
 const byN = Object.fromEntries(CAT.map(c => [c.n, c]));
 
 const SERIES = {
@@ -558,7 +560,8 @@ const SERIES = {
   ys:     { title: '延世韩国语', tag: n => { const p = String(n).split('-'); return '第' + p[0].slice(1) + '册 ' + (+p[1]) + '课'; }, unit: '课' },
   tw:     { title: 'TOPIK 必备单词', tag: n => { const b = byN[n]; return b ? b.k : String(n); }, unit: '单元' },
   tk:     { title: 'TOPIK 阅读真题', tag: n => { const b = byN[n]; return b ? '第' + b.e + '届 읽기 · ' + b.q + '번' : String(n); }, unit: '题' },
-  book:   { title: '韩语书', tag: n => (String(n).endsWith('-00') ? '序' : '第 ' + (+String(n).split('-')[1]) + ' 篇'), unit: '篇' }
+  book:   { title: '韩语书', tag: n => (String(n).endsWith('-00') ? '序' : '第 ' + (+String(n).split('-')[1]) + ' 篇'), unit: '篇' },
+  vh:     { title: '视频收藏夹', tag: n => { const b = byN[n]; return b ? '视频 ' + b.k : String(n); }, unit: '条' }
 };
 const SR = c => c.s || 'ttmik';
 let series = SERIES[localStorage.ttmikSeries] ? localStorage.ttmikSeries : 'ttmik';
@@ -619,6 +622,12 @@ function renderList() {
       const L = LYR[c.n];
       return ('unit ' + c.u + ' ' + c.zh).toLowerCase().includes(q)
         || (L && L.lines && L.lines.some(l => ((l.t || '') + ' ' + (l.m || '') + ' ' + (l.z || '')).toLowerCase().includes(q)));
+    }
+    if (series === 'vh') {
+      // 视频：标题、UP 主、正文逐句都能搜到
+      const L = LYR[c.n];
+      return (c.ko || '').toLowerCase().includes(q) || (c.zh || '').toLowerCase().includes(q)
+        || (L && L.lines && L.lines.some(l => (l.t || '').toLowerCase().includes(q)));
     }
     if (series === 'tk') {
       // 阅读题：搜正文、选项、题型说明；跨届命中就直接列出来
